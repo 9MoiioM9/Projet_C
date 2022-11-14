@@ -81,7 +81,41 @@ static int parseArgs(int argc, char * argv[], int *number)
 /************************************************************************
  * Fonction principale
  ************************************************************************/
+void afficheOrdre()
+{
+    switch(ordre)
+    {
+        case ORDER_COMPUTE_PRIME : printf("Nombre de Premier");
+        break;
 
+        case ORDER_COMPUTE_PRIME_LOCAL : printf("jsp");
+        break;
+        
+         
+    }
+
+
+}
+
+
+int sectionCritique()
+{
+    key_t cle_client = ftok(FICHIER, CLE_CLIENT);
+    myassert(cle_client != -1, "pas possible de recup la clé");
+
+    //vue avec daniel meneveaux pour le mutex qu'on passe par un semaphore
+
+    int sema_mutex = semget(CLE_CLIENT, 1, 0);
+    myassert(sema_mutex != -1, "Incapable de faire la semaphore");
+
+    struct sembuf operation = {0, -1, 0};
+
+
+    int sema_ope = semop(sema_mutex, &operation, 1);
+    myassert(sema_ope != -1 , "operation invalide");
+
+    return sema_mutex;
+}
 
 
 
