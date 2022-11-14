@@ -86,33 +86,6 @@ void loop(/* paramètres */)
     //
     // il est important d'ouvrir et fermer les tubes nommés à chaque itération
     // voyez-vous pourquoi ?
-    void master_to_client(int F_Write, int F_Read, int result)
-{
-	printf("Début de communication avec le client\n");
-
-	key_t key = ftok(FICHIER, CLE_MASTER);
-	assert(key != -1);
-
-	int commande, nb;
-	int ret;
-	
-	
-	ret = read(F_Read, &commande, sizeof(int));
-	assert(ret == sizeof(int));
-	
-	if(commande ==  ORDER_COMPUTE_PRIME)
-	{
-		ret = read(F_Read, &nb, sizeof(int));
-		assert(ret == sizeof(int));
-	}
-	
-	ret = write(F_Write, &result, sizeof(int));
-	assert(ret == sizeof(int));
-	
-	printf("résultat transmis : %d \n", result);
-
-}
-
 }
 
 
@@ -127,6 +100,7 @@ int main(int argc, char * argv[])
 
     // - création des sémaphores
     int sema1, sema2;
+    int mutex;
     
     sema1 = semget(, 2, IPC_CREAT | 0641);
     assert(sema1 != -1);
