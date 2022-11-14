@@ -20,8 +20,7 @@
 
 // bref n'hésitez à mettre nombre de fonctions avec des noms explicites
 // pour masquer l'implémentation
-void master_to_client(int F_Write, int F_Read, int result);
-void client_to_master(int F_Write, int F_Read);
+
 
 
 
