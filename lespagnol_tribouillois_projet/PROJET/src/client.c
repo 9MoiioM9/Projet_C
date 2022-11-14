@@ -82,6 +82,9 @@ static int parseArgs(int argc, char * argv[], int *number)
  * Fonction principale
  ************************************************************************/
 
+
+
+
 int main(int argc, char * argv[])
 {
     int number = 0;
@@ -102,10 +105,19 @@ int main(int argc, char * argv[])
     //           . pour empêcher que 2 clients communiquent simultanément
     //           . le mutex est déjà créé par le master
     //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
-    int client_master = open("client_master", O_WRONLY);
-    assert(
+    if(order == ORDER_COMPUTE_PRIME_LOCAL)
+    {
+        //TODO code thread 
+    }else {
+
+
+
+        int client_master = open("client_master", O_WRONLY);
+        assert(client_master != -1);
     
-    int master_client = open("master_client", O_RDONLY);
+        int master_client = open("master_client", O_RDONLY);
+        assert(master_client != -1);
+    }
     
     
     //           . les ouvertures sont bloquantes, il faut s'assurer que

@@ -18,9 +18,11 @@ void master_to_client(int F_Write, int F_Read, int result)
 {
 	printf("Début de communication avec le client\n");
 
+	key_t key = ftok(FICHIER, CLE_MASTER);
+	assert(key != -1);
+
 	int commande, nb;
 	int ret;
-	
 	
 	
 	ret = read(F_Read, &commande, sizeof(int));
@@ -31,9 +33,6 @@ void master_to_client(int F_Write, int F_Read, int result)
 		ret = read(F_Read, &nb, sizeof(int));
 		assert(ret == sizeof(int));
 	}
-	
-	
-	
 	
 	ret = write(F_Write, &result, sizeof(int));
 	assert(ret == sizeof(int));
@@ -47,6 +46,9 @@ void client_to_master(int F_Write, int F_Read)
 {
 	printf("Début de communication avec le master\n");
 	
+	key_t key = ftok(FICHIER, CLE_CLIENT);
+	assert(key != -1);
+
 	int commande,ret, nb;
 	scanf("%d", &commande);
 	if(commande == 1)

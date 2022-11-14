@@ -13,14 +13,16 @@
 #define ORDER_HOW_MANY_PRIME      2
 #define ORDER_HIGHEST_PRIME       3
 #define ORDER_COMPUTE_PRIME_LOCAL 4   // ne concerne pas le master
-#define CLE_MASTER 56
-#define CLE_CLIENT 54
+#define CLE_MASTER  56
+#define CLE_CLIENT  54
 #define FICHIER "master_client.h"
+
 
 // bref n'hésitez à mettre nombre de fonctions avec des noms explicites
 // pour masquer l'implémentation
-void client_to_master(int F_Write, int F_Read);
 void master_to_client(int F_Write, int F_Read, int result);
+void client_to_master(int F_Write, int F_Read);
+
 
 
 #endif
