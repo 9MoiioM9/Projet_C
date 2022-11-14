@@ -14,6 +14,7 @@
 static int NB_Prime;
 
 // fonctions éventuelles internes au fichier
+/*
 void master_to_client(int F_Write, int F_Read, int result)
 {
 	printf("Début de communication avec le client\n");
@@ -75,6 +76,8 @@ void client_to_master(int F_Write, int F_Read)
 		
 	}
 	ret = read(fdRead, &result, sizeof(int));
+
+
 	assert(ret == sizeof(int));
 
 }
@@ -84,3 +87,4 @@ void client_to_master(int F_Write, int F_Read)
 
 
 // fonctions éventuelles proposées dans le .h
+*/
