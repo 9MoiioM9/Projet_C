@@ -103,7 +103,7 @@ void loop(/* paramètres */)
 
     master_to_worker(envoi, nbr_test);
     //       . récupérer la réponse
-    worker_to_master(resp, retour);
+    retour = worker_to_master(resp);
     //       . la transmettre au client
     if(commande == 1)
     {
