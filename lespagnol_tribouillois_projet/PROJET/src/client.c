@@ -5,7 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <string.h>
+#include <unistd.h>
+#include <math.h>
+#include <fcntl.h>
 
 #include "myassert.h"
 
@@ -81,42 +87,69 @@ static int parseArgs(int argc, char * argv[], int *number)
 /************************************************************************
  * Fonction principale
  ************************************************************************/
-void afficheOrdre()
+
+
+void ReponseMaster(int order, int reponse)
 {
-    switch(ordre)
+    switch(order)
     {
-        case ORDER_COMPUTE_PRIME : printf("Nombre de Premier");
+        case ORDER_COMPUTE_PRIME : 
+            if(reponse == 1)
+            {
+                printf("Le nombre choisi est premier");
+            }else printf("le nombre choisi n'est pas premier");
         break;
 
-        case ORDER_COMPUTE_PRIME_LOCAL : printf("jsp");
+        case ORDER_HIGHEST_PRIME : printf("\nLe nombre premier le plus grand calculé est %d\n",reponse);
         break;
-        
-         
+
+        case ORDER_HOW_MANY_PRIME : printf("\n %d ont été calculé\n",reponse);
+        break;
+
+        case ORDER_STOP : 
+        if(reponse == 1)
+        {
+            printf("Le master et ses workers se sont bien terminer");
+        }else printf("Le master et ses workers ne se sont pas terminer");
+        break;
+
+        default : printf("Ordre en attente");
+        break;
     }
-
-
 }
 
 
-int sectionCritique()
+int entree_SC()
 {
     key_t cle_client = ftok(FICHIER, CLE_CLIENT);
-    myassert(cle_client != -1, "pas possible de recup la clé");
-
-    //vue avec daniel meneveaux pour le mutex qu'on passe par un semaphore
+    myassert(cle_client != -1, "\nPas possible de récupérer la clé\n");
 
     int sema_mutex = semget(CLE_CLIENT, 1, 0);
-    myassert(sema_mutex != -1, "Incapable de faire la semaphore");
+    myassert(sema_mutex != -1, "\nIncapable de faire le mutex\n");
 
-    struct sembuf operation = {0, -1, 0};
-
+    struct sembuf operation = {0, -1 , 0};
 
     int sema_ope = semop(sema_mutex, &operation, 1);
-    myassert(sema_ope != -1 , "operation invalide");
+    myassert(sema_ope != -1 , "\nOpération invalide\n");
 
     return sema_mutex;
 }
 
+int sortie_SC()
+{
+    key_t cle_client = ftok(FICHIER, CLE_CLIENT);
+    myassert(cle_client != -1, "\nPas possible de récupérer la clé\n");
+
+    int sema_mutex = semget(CLE_CLIENT, 1, 0);
+    myassert(sema_mutex != -1, "\nIncapable de récupérer le mutex\n");
+
+    struct sembuf operation = {0, +1 , 0};
+
+    int sema_ope = semop(sema_mutex, &operation, 1);
+    myassert(sema_ope != -1 , "\nOpération invalide\n");
+
+    return sema_mutex;
+}
 
 
 int main(int argc, char * argv[])
@@ -125,43 +158,63 @@ int main(int argc, char * argv[])
     int order = parseArgs(argc, argv, &number);
     printf("%d\n", order); // pour éviter le warning
 
+    
     // order peut valoir 5 valeurs (cf. master_client.h) :
     //      - ORDER_COMPUTE_PRIME_LOCAL
     //      - ORDER_STOP
     //      - ORDER_COMPUTE_PRIME
     //      - ORDER_HOW_MANY_PRIME
     //      - ORDER_HIGHEST_PRIME
-    //
-    // si c'est ORDER_COMPUTE_PRIME_LOCAL
+        // si c'est ORDER_COMPUTE_PRIME_LOCAL
     //    alors c'est un code complètement à part multi-thread
     // sinon
     //    - entrer en section critique :
     //           . pour empêcher que 2 clients communiquent simultanément
     //           . le mutex est déjà créé par le master
+    
     //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
+
+    int sc, master_client, client_master, reponse;
+
     if(order == ORDER_COMPUTE_PRIME_LOCAL)
     {
         //TODO code thread 
     }else {
 
+        //  gestion SC
+        sc = entree_SC();
+        
+        //  gestion des tubes
+        master_client = open("master_client", O_RDONLY);
+        myassert(master_client != -1, "ouverture en mode lecture impossible");
 
-
-        int client_master = open("client_master", O_WRONLY);
-        assert(client_master != -1);
-    
-        int master_client = open("master_client", O_RDONLY);
-        assert(master_client != -1);
+        client_master = open("client_master", O_WRONLY);
+        myassert(client_master != -1, "ouverture en mode ecriture impossible");
+        
     }
     
     
     //           . les ouvertures sont bloquantes, il faut s'assurer que
     //             le master ouvre les tubes dans le même ordre
     //    - envoyer l'ordre et les données éventuelles au master
+
     //    - attendre la réponse sur le second tube
+    
+    master_client = read("client_master", &reponse, sizeof(int));
+    myassert(master_client != sizeof(int), "La lecture est compromise");
+    //blocage du master suite à sa réponse
+    
     //    - sortir de la section critique
+
+    sc = sortie_SC();
+    
     //    - libérer les ressources (fermeture des tubes, ...)
+
+    close(master_client);
+    close(client_master);
+
     //    - débloquer le master grâce à un second sémaphore (cf. ci-dessous)
-    // 
+    
     // Une fois que le master a envoyé la réponse au client, il se bloque
     // sur un sémaphore ; le dernier point permet donc au master de continuer
     //

@@ -5,6 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <string.h>
+#include <unistd.h>
+#include <math.h>
+#include <fcntl.h>
 
 #include "myassert.h"
 
@@ -67,13 +74,14 @@ void loop(/* paramètres */)
     }
     // - si ORDER_HOW_MANY_PRIME
     //       . transmettre la réponse au client
-    if(// à chaque fois qu'un worker renvoie true
-    {
-    	nb_prime++;
-    }
+   // if(// à chaque fois qu'un worker renvoie true
+  //  {
+   // 	nb_prime++;
+   // }
     // - si ORDER_HIGHEST_PRIME
     //       . transmettre la réponse au client
     int max = 0;
+    int result;
     if(max < result)
     {
     	max = result;
@@ -101,13 +109,13 @@ int main(int argc, char * argv[])
     // - création des sémaphores
     int sema1, sema2;
     int mutex;
-    
+    /*
     sema1 = semget(, 2, IPC_CREAT | 0641);
     assert(sema1 != -1);
     
     sema2 = semget(, 2, IPC_CREAT | 0641);
     assert(sema2 != -1);
-    
+    */
     // - création des tubes nommés
     int ret1 = mkfifo("master_client", 0644);
     assert(ret1 == 0);
