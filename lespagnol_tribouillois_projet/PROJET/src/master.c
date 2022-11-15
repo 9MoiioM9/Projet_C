@@ -38,6 +38,34 @@ static void usage(const char *exeName, const char *message)
     exit(EXIT_FAILURE);
 }
 
+void master_to_worker(int envoi[2], int nbr)
+{
+    close(envoi[0]);
+    int ret;
+
+    ret = write(envoi[1], &nbr, sizeof(int));
+    assert(ret == sizeof(int));
+
+    close(envoi[1]);
+
+    exit(EXIT_FAILURE);
+}
+
+bool worker_to_master(int rep[2])
+{
+
+    bool res;
+    close(rep[1]);
+    int ret;
+
+    ret = read(rep[0], &res, sizeof(bool));
+    assert(ret == sizeof(bool));
+
+    close(rep[0]);
+
+    return res; 
+}
+
 
 /************************************************************************
  * boucle principale de communication avec le client
@@ -48,9 +76,13 @@ void loop(/* paramètres */)
     // - ouverture des tubes (cf. rq client.c)
     int master_client = open("master_client", O_WRONLY);
     int client_master = open("client_master", O_RDONLY);
+    int envoi[2];
+    int resp[2];
+    pid_t retFork;
     
     int commande;
     int nbr_test;
+    bool retour;
     // - attente d'un ordre du client (via le tube nommé)
     // - si ORDER_STOP
     if(commande == -1)
@@ -66,7 +98,12 @@ void loop(/* paramètres */)
     //             on leur envoie tous les nombres entre M+1 et N-1
     //             note : chaque envoie déclenche une réponse des workers
     //       . envoyer N dans le pipeline
+    retFork = fork();
+    assert(retFork != -1);
+
+    master_to_worker(envoi, nbr_test);
     //       . récupérer la réponse
+    worker_to_master(resp, retour);
     //       . la transmettre au client
     if(commande == 1)
     {
