@@ -37,14 +37,14 @@ static void usage(const char *exeName, const char *message)
         fprintf(stderr, "message : %s\n", message);
     exit(EXIT_FAILURE);
 }
-
+/*
 void master_to_worker(int envoi[2], int nbr)
 {
     close(envoi[0]);
     int ret;
 
     ret = write(envoi[1], &nbr, sizeof(int));
-    assert(ret == sizeof(int));
+    myassert(ret == sizeof(int),"reuighiez");
 
     close(envoi[1]);
 
@@ -59,13 +59,13 @@ bool worker_to_master(int rep[2])
     int ret;
 
     ret = read(rep[0], &res, sizeof(bool));
-    assert(ret == sizeof(bool));
+    myassert(ret == sizeof(bool), "zkeogzoi");
 
     close(rep[0]);
 
     return res; 
 }
-
+*/
 
 /************************************************************************
  * boucle principale de communication avec le client
@@ -80,20 +80,21 @@ void loop(/* paramètres */)
     int client_master = open("client_master", O_RDONLY);
     myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
     
+    //work work work 
+    //int envoi[2];
+   // int resp[2];
+   // pid_t retFork;
     
-    int envoi[2];
-    int resp[2];
-    pid_t retFork;
-    
-    int commande;
-    int nbr_test;
-    bool retour;
+    int commande, nb_test;
+   // bool retour;
     // - attente d'un ordre du client (via le tube nommé)
+    int ret = read(client_master, &commande, sizeof(int));
+    myassert(ret == sizeof(int), "lecture compromise");
+        printf("test d'ordre : %d ", commande);
     // - si ORDER_STOP
-    if(commande == -1)
-    {
+    
         // demader au worker de se fermer
-    }
+    
     //       . envoyer ordre de fin au premier worker et attendre sa fin
     //       . envoyer un accusé de réception au client
     // - si ORDER_COMPUTE_PRIME
@@ -103,31 +104,39 @@ void loop(/* paramètres */)
     //             on leur envoie tous les nombres entre M+1 et N-1
     //             note : chaque envoie déclenche une réponse des workers
     //       . envoyer N dans le pipeline
-    retFork = fork();
-    myassert(retFork != -1, "problème au niveau du fork pour les workers");
+    
+    //retFork = fork();
+    //myassert(retFork != -1, "problème au niveau du fork pour les workers");
 
-    master_to_worker(envoi, nbr_test);
+    //master_to_worker(envoi, nb_test);
     //       . récupérer la réponse
-    retour = worker_to_master(resp);
+    //retour = worker_to_master(resp);
     //       . la transmettre au client
-    if(commande == 1)
-    {
-
-    }
+ 
     // - si ORDER_HOW_MANY_PRIME
     //       . transmettre la réponse au client
+    int howmany = 0;
+
+    printf("\nReponse : %d\n", howmany);
+
+
+    ret = write(master_client, &howmany, sizeof(int));
+    myassert(ret == sizeof(int), "ecriture compromise");
+
    // if(// à chaque fois qu'un worker renvoie true
   //  {
    // 	nb_prime++;
    // }
     // - si ORDER_HIGHEST_PRIME
     //       . transmettre la réponse au client
+    /*
     int max = 0;
     int result;
     if(max < result)
     {
     	max = result;
     }
+    */
     // - fermer les tubes nommés
     close(master_client);
     close(client_master);
@@ -137,6 +146,23 @@ void loop(/* paramètres */)
     // il est important d'ouvrir et fermer les tubes nommés à chaque itération
     // voyez-vous pourquoi ?
 }
+
+/*
+int reponseMaster(){
+    key_t cle_master = ftok(FICHIER, CLE_MASTER);
+    myassert(cle_master != -1, "\nPas possible de récupérer la clé\n"); 
+
+    int sema_rep = semget(CLE_MASTER, 1, 0);
+    myassert(sema_rep != -1, "\nIncapable de faire le mutex\n");
+
+    struct sembuf operation = {0, -1 , 0};
+
+    int sema_ope = semop(sema_rep, &operation, 1);
+    myassert(sema_ope != -1 , "\nOpération invalide\n");
+
+    return sema_rep;
+}
+*/
 
 
 /************************************************************************
@@ -153,14 +179,10 @@ int main(int argc, char * argv[])
     myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
-    /*
-    sema1 = semget(, 2, IPC_CREAT | 0641);
-    assert(sema1 != -1);
     
-    sema2 = semget(, 2, IPC_CREAT | 0641);
-    assert(sema2 != -1);
-    */
+
     // - création des tubes nommés
+
     int tube_mc = mkfifo("master_client", 0644);
     myassert(tube_mc != -1, "problème au niveau du tube master_client");
     int tube_cm = mkfifo("client_master", 0644);

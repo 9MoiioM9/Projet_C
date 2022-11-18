@@ -175,7 +175,7 @@ int main(int argc, char * argv[])
     //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
 
     int sc, master_client, client_master, reponse;
-
+/*
     if(order == ORDER_COMPUTE_PRIME_LOCAL)
     {
         //TODO code thread 
@@ -191,22 +191,35 @@ int main(int argc, char * argv[])
         client_master = open("client_master", O_WRONLY);
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
         
-    }
+    }*/
+    master_client = open("master_client", O_RDONLY);
+    myassert(master_client != -1, "ouverture en mode lecture impossible");
+
+    client_master = open("client_master", O_WRONLY);
+    myassert(client_master != -1, "ouverture en mode ecriture impossible");
     
-    
+    int tst = write(client_master, &order, sizeof(int));
+    myassert(tst == sizeof(int), "ouais");
+
     //           . les ouvertures sont bloquantes, il faut s'assurer que
     //             le master ouvre les tubes dans le même ordre
     //    - envoyer l'ordre et les données éventuelles au master
 
     //    - attendre la réponse sur le second tube
-    
+    tst = read(master_client, &reponse, sizeof(int));
+    myassert(tst == sizeof(int), "lecture compromise");
+
+
+    printf("\nReponse : %d\n", reponse);
+    /*
     master_client = read("client_master", &reponse, sizeof(int));
     myassert(master_client != sizeof(int), "La lecture est compromise");
+    */
     //blocage du master suite à sa réponse
     
     //    - sortir de la section critique
 
-    sc = sortie_SC();
+    //sc = sortie_SC();
     
     //    - libérer les ressources (fermeture des tubes, ...)
 
