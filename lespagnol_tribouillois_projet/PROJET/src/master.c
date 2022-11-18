@@ -92,6 +92,13 @@ void loop(/* paramètres */)
     myassert(ret == sizeof(int), "lecture compromise");
         printf("test d'ordre : %d ", commande);
     // - si ORDER_STOP
+    int r = 1;
+    if(commande == -1)
+    {
+        ret = write(master_client, &r, sizeof(int));
+        myassert(ret == sizeof(int), "lecture compromise");
+    }
+
     
         // demader au worker de se fermer
     

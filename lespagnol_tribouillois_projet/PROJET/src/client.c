@@ -175,6 +175,10 @@ int main(int argc, char * argv[])
     //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
 
     int sc, master_client, client_master, reponse;
+    
+    sc = entree_SC();
+
+    
 /*
     if(order == ORDER_COMPUTE_PRIME_LOCAL)
     {
@@ -212,6 +216,14 @@ int main(int argc, char * argv[])
 
 
     printf("\nReponse : %d\n", reponse);
+
+    if(reponse == 1)
+    {
+        close(master_client);
+        close(client_master);
+    }
+
+    sc = sortie_SC();
     /*
     master_client = read("client_master", &reponse, sizeof(int));
     myassert(master_client != sizeof(int), "La lecture est compromise");
