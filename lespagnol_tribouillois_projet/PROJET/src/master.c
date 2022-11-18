@@ -75,7 +75,12 @@ void loop(/* paramètres */)
     // boucle infinie :
     // - ouverture des tubes (cf. rq client.c)
     int master_client = open("master_client", O_WRONLY);
+    myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
+
     int client_master = open("client_master", O_RDONLY);
+    myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
+    
+    
     int envoi[2];
     int resp[2];
     pid_t retFork;
@@ -99,7 +104,7 @@ void loop(/* paramètres */)
     //             note : chaque envoie déclenche une réponse des workers
     //       . envoyer N dans le pipeline
     retFork = fork();
-    assert(retFork != -1);
+    myassert(retFork != -1, "problème au niveau du fork pour les workers");
 
     master_to_worker(envoi, nbr_test);
     //       . récupérer la réponse
@@ -144,8 +149,10 @@ int main(int argc, char * argv[])
         usage(argv[0], NULL);
 
     // - création des sémaphores
-    int sema1, sema2;
-    int mutex;
+    int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
+    myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
+    int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
+    myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
     /*
     sema1 = semget(, 2, IPC_CREAT | 0641);
     assert(sema1 != -1);
@@ -154,10 +161,10 @@ int main(int argc, char * argv[])
     assert(sema2 != -1);
     */
     // - création des tubes nommés
-    int ret1 = mkfifo("master_client", 0644);
-    assert(ret1 == 0);
-    int ret2 = mkfifo("client_master", 0644);
-    assert(ret2 == 0);
+    int tube_mc = mkfifo("master_client", 0644);
+    myassert(tube_mc != -1, "problème au niveau du tube master_client");
+    int tube_cm = mkfifo("client_master", 0644);
+    myassert(tube_cm != 1, "problème au niveau du tube client_master");
     
     // - création du premier worker
 
@@ -167,10 +174,11 @@ int main(int argc, char * argv[])
 
     // destruction des tubes nommés, des sémaphores, ...
     
-    ret1 = unlink("master_client");
-    assert(ret1 == 0);
-    ret2 = unlink("client_master");
-    assert(ret2 == 0);
+
+    tube_mc = unlink("master_client");
+    myassert(tube_mc != -1, "Le tube 1 ne s'est pas bien détruit");
+    tube_cm = unlink("client_master");
+    myassert(tube_cm != -1, "le tube 2 ne s'est pas détruit correctement");
 
     return EXIT_SUCCESS;
 }
