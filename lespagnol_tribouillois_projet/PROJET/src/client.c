@@ -192,6 +192,7 @@ int main(int argc, char * argv[])
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
         
     }*/
+    
     master_client = open("master_client", O_RDONLY);
     myassert(master_client != -1, "ouverture en mode lecture impossible");
 
