@@ -119,39 +119,6 @@ void ReponseMaster(int order, int reponse)
 }
 
 
-int entree_SC()
-{
-    key_t cle_client = ftok(FICHIER, CLE_CLIENT);
-    myassert(cle_client != -1, "\nPas possible de récupérer la clé\n");
-
-    int sema_mutex = semget(CLE_CLIENT, 1, 0);
-    myassert(sema_mutex != -1, "\nIncapable de faire le mutex\n");
-
-    struct sembuf operation = {0, -1 , 0};
-
-    int sema_ope = semop(sema_mutex, &operation, 1);
-    myassert(sema_ope != -1 , "\nOpération invalide\n");
-
-    return sema_mutex;
-}
-
-int sortie_SC()
-{
-    key_t cle_client = ftok(FICHIER, CLE_CLIENT);
-    myassert(cle_client != -1, "\nPas possible de récupérer la clé\n");
-
-    int sema_mutex = semget(CLE_CLIENT, 1, 0);
-    myassert(sema_mutex != -1, "\nIncapable de récupérer le mutex\n");
-
-    struct sembuf operation = {0, +1 , 0};
-
-    int sema_ope = semop(sema_mutex, &operation, 1);
-    myassert(sema_ope != -1 , "\nOpération invalide\n");
-
-    return sema_mutex;
-}
-
-
 int main(int argc, char * argv[])
 {
     int number = 0;
@@ -176,7 +143,7 @@ int main(int argc, char * argv[])
 
     int sc, master_client, client_master, reponse;
     
-    sc = entree_SC();
+    sc = entree_SC(56);
 
     
 /*
@@ -211,6 +178,8 @@ int main(int argc, char * argv[])
     //    - envoyer l'ordre et les données éventuelles au master
 
     //    - attendre la réponse sur le second tube
+    //sleep(3);
+
     tst = read(master_client, &reponse, sizeof(int));
     myassert(tst == sizeof(int), "lecture compromise");
 
@@ -223,7 +192,7 @@ int main(int argc, char * argv[])
         close(client_master);
     }
 
-    sc = sortie_SC();
+    sc = sortie_SC(56);
     /*
     master_client = read("client_master", &reponse, sizeof(int));
     myassert(master_client != sizeof(int), "La lecture est compromise");

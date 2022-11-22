@@ -21,7 +21,9 @@
 // bref n'hésitez à mettre nombre de fonctions avec des noms explicites
 // pour masquer l'implémentation
 
+int entree_SC();
 
+int sortie_SC();
 
 
 #endif

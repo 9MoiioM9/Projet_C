@@ -73,85 +73,97 @@ bool worker_to_master(int rep[2])
 void loop(/* paramètres */)
 {
     // boucle infinie :
-    // - ouverture des tubes (cf. rq client.c)
-    int master_client = open("master_client", O_WRONLY);
-    myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
+    while (true){
+        // - ouverture des tubes (cf. rq client.c)
+        int master_client = open("master_client", O_WRONLY);
+        myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
 
-    int client_master = open("client_master", O_RDONLY);
-    myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
-    
-    //work work work 
-    //int envoi[2];
-   // int resp[2];
-   // pid_t retFork;
-    
-    int commande, nb_test;
-   // bool retour;
-    // - attente d'un ordre du client (via le tube nommé)
-    int ret = read(client_master, &commande, sizeof(int));
-    myassert(ret == sizeof(int), "lecture compromise");
-        printf("test d'ordre : %d ", commande);
-    // - si ORDER_STOP
-    int r = 1;
-    if(commande == -1)
-    {
-        ret = write(master_client, &r, sizeof(int));
+        int client_master = open("client_master", O_RDONLY);
+        myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
+        
+        //work work work 
+        //int envoi[2];
+    // int resp[2];
+    // pid_t retFork;
+        
+        int commande, nb_test,sc;
+    // bool retour;
+        // - attente d'un ordre du client (via le tube nommé)
+
+        
+
+        int ret = read(client_master, &commande, sizeof(int));
         myassert(ret == sizeof(int), "lecture compromise");
+            printf("test d'ordre : %d ", commande);
+        // - si ORDER_STOP
+        
+        int r = 1;
+        if(commande == -1)
+        {
+            ret = write(master_client, &r, sizeof(int));
+            myassert(ret == sizeof(int), "lecture compromise");
+        }
+
+        
+            // demader au worker de se fermer
+        
+        //       . envoyer ordre de fin au premier worker et attendre sa fin
+        //       . envoyer un accusé de réception au client
+        // - si ORDER_COMPUTE_PRIME
+        //       . récupérer le nombre N à tester provenant du client
+        //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
+        //             il faut connaître le plus nombre (M) déjà enovoyé aux workers
+        //             on leur envoie tous les nombres entre M+1 et N-1
+        //             note : chaque envoie déclenche une réponse des workers
+        //       . envoyer N dans le pipeline
+        
+        //retFork = fork();
+        //myassert(retFork != -1, "problème au niveau du fork pour les workers");
+
+        //master_to_worker(envoi, nb_test);
+        //       . récupérer la réponse
+        //retour = worker_to_master(resp);
+        //       . la transmettre au client
+    
+        // - si ORDER_HOW_MANY_PRIME
+        //       . transmettre la réponse au client
+        int howmany = 0;
+
+        printf("\nReponse : %d\n", howmany);
+
+        sc = entree_SC(56);
+        ret = write(master_client, &howmany, sizeof(int));
+        myassert(ret == sizeof(int), "ecriture compromise");
+
+        sc = sortie_SC(56);
+    // if(// à chaque fois qu'un worker renvoie true
+    //  {
+    // 	nb_prime++;
+    // }
+        // - si ORDER_HIGHEST_PRIME
+        //       . transmettre la réponse au client
+        /*
+        int max = 0;
+        int result;
+        if(max < result)
+        {
+            max = result;
+        }
+        */
+        // - fermer les tubes nommés
+        printf("\nIICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIii\n");
+        close(master_client);
+        close(client_master);
+        // - attendre ordre du client avant de continuer (sémaphore : précédence)
+        // - revenir en début de boucle
+        //
+        // il est important d'ouvrir et fermer les tubes nommés à chaque itération
+        // voyez-vous pourquoi ?
+        if(commande == -1){
+            break;
+        }
     }
-
     
-        // demader au worker de se fermer
-    
-    //       . envoyer ordre de fin au premier worker et attendre sa fin
-    //       . envoyer un accusé de réception au client
-    // - si ORDER_COMPUTE_PRIME
-    //       . récupérer le nombre N à tester provenant du client
-    //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
-    //             il faut connaître le plus nombre (M) déjà enovoyé aux workers
-    //             on leur envoie tous les nombres entre M+1 et N-1
-    //             note : chaque envoie déclenche une réponse des workers
-    //       . envoyer N dans le pipeline
-    
-    //retFork = fork();
-    //myassert(retFork != -1, "problème au niveau du fork pour les workers");
-
-    //master_to_worker(envoi, nb_test);
-    //       . récupérer la réponse
-    //retour = worker_to_master(resp);
-    //       . la transmettre au client
- 
-    // - si ORDER_HOW_MANY_PRIME
-    //       . transmettre la réponse au client
-    int howmany = 0;
-
-    printf("\nReponse : %d\n", howmany);
-
-
-    ret = write(master_client, &howmany, sizeof(int));
-    myassert(ret == sizeof(int), "ecriture compromise");
-
-   // if(// à chaque fois qu'un worker renvoie true
-  //  {
-   // 	nb_prime++;
-   // }
-    // - si ORDER_HIGHEST_PRIME
-    //       . transmettre la réponse au client
-    /*
-    int max = 0;
-    int result;
-    if(max < result)
-    {
-    	max = result;
-    }
-    */
-    // - fermer les tubes nommés
-    close(master_client);
-    close(client_master);
-    // - attendre ordre du client avant de continuer (sémaphore : précédence)
-    // - revenir en début de boucle
-    //
-    // il est important d'ouvrir et fermer les tubes nommés à chaque itération
-    // voyez-vous pourquoi ?
 }
 
 /*
@@ -184,16 +196,17 @@ int main(int argc, char * argv[])
     // - création des sémaphores
     int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
+    
+    struct sembuf operation = {0, +1 , 0};
 
-    sema_precedence = semctl(CLE_MASTER, 1, SETVAL, 1);
-    myassert(sema_precedence != -1, "pb de precedence");
+    int sema_ope = semop(sema_precedence, &operation, 1);
+    myassert(sema_ope != -1 , "\nOpération invalide\n");
 
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
-    myassert(sema_mutex == -1, "le semaphore ne s'est pas creer");
+    myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
 
-    sema_mutex = semctl(CLE_CLIENT, 1, SETVAL, 1);
-    myassert(sema_mutex == -1, "pb de mutex");
-    
+    sema_ope = semop(sema_mutex, &operation, 1);
+    myassert(sema_ope != -1 , "\nOpération invalide\n");
 
     // - création des tubes nommés
 
@@ -206,7 +219,7 @@ int main(int argc, char * argv[])
 
 
     // boucle infinie
-    loop(/* paramètres */);
+    loop();
 
     // destruction des tubes nommés, des sémaphores, ...
     
@@ -221,3 +234,4 @@ int main(int argc, char * argv[])
 
 // N'hésitez pas à faire des fonctions annexes ; si les fonctions main
 // et loop pouvaient être "courtes", ce serait bien
+
