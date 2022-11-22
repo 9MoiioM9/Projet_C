@@ -184,6 +184,10 @@ int main(int argc, char * argv[])
     // - création des sémaphores
     int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
+
+    sema_precedence = semctl(CLE_MASTER, 1, SETVAL, 17);
+    myassert(sema_precedence != -1, "pb de precedence");
+
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
     
