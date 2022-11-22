@@ -122,7 +122,7 @@ void loop(/* paramètres */)
             int retFork = fork();
             if(retFork == 0)
             {
-            
+                //exec à faire
             }
             myassert(retFork != -1, "problème au niveau du fork pour les workers");
 
@@ -158,7 +158,7 @@ void loop(/* paramètres */)
         {
             max = result;
         }
-        */
+
         // - fermer les tubes nommés
         printf("\nIICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIii\n");
         close(master_client);
