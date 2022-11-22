@@ -37,7 +37,7 @@ static void usage(const char *exeName, const char *message)
         fprintf(stderr, "message : %s\n", message);
     exit(EXIT_FAILURE);
 }
-/*
+
 void master_to_worker(int envoi[2], int nbr)
 {
     close(envoi[0]);
@@ -61,11 +61,10 @@ bool worker_to_master(int rep[2])
     ret = read(rep[0], &res, sizeof(bool));
     myassert(ret == sizeof(bool), "zkeogzoi");
 
-    close(rep[0]);tube_cm
+    close(rep[0]);
 
-    return res; tube_cm
+    return res;
 }
-*/
 
 /************************************************************************
  * boucle principale de communication avec le client
@@ -81,13 +80,11 @@ void loop(/* paramètres */)
         int client_master = open("client_master", O_RDONLY);
         myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
         
-        //work work work 
-        //int envoi[2];
-    // int resp[2];
-    // pid_t retFork;
+    
+        int envoi[2];
+        int resp[2];
         
         int commande, nb_test,sc;
-    // bool retour;
         // - attente d'un ordre du client (via le tube nommé)
 
         
@@ -95,20 +92,24 @@ void loop(/* paramètres */)
         int ret = read(client_master, &commande, sizeof(int));
         myassert(ret == sizeof(int), "lecture compromise");
             printf("test d'ordre : %d ", commande);
+       
+
+
+        //===============================================================================================
         // - si ORDER_STOP
-        
         int r = 1;
         if(commande == -1)
         {
             ret = write(master_client, &r, sizeof(int));
             myassert(ret == sizeof(int), "lecture compromise");
         }
-
-        
-            // demader au worker de se fermer
-        
+        // demader au worker de se fermer
         //       . envoyer ordre de fin au premier worker et attendre sa fin
         //       . envoyer un accusé de réception au client
+
+
+
+        //===============================================================================================
         // - si ORDER_COMPUTE_PRIME
         //       . récupérer le nombre N à tester provenant du client
         //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
@@ -116,15 +117,24 @@ void loop(/* paramètres */)
         //             on leur envoie tous les nombres entre M+1 et N-1
         //             note : chaque envoie déclenche une réponse des workers
         //       . envoyer N dans le pipeline
-        
-        //retFork = fork();
-        //myassert(retFork != -1, "problème au niveau du fork pour les workers");
+        if(commande == 1)
+        {
+            int retFork = fork();
+            if(retFork == 0)
+            {
+            
+            }
+            myassert(retFork != -1, "problème au niveau du fork pour les workers");
 
-        //master_to_worker(envoi, nb_test);
+            master_to_worker(envoi, nb_test);
         //       . récupérer la réponse
-        //retour = worker_to_master(resp);
+            int retour = worker_to_master(resp);
         //       . la transmettre au client
-    
+            ret = write(master_client, &retour, sizeof(int));
+            myassert(ret == sizeof(int), "ecriture compromise");
+        }
+        
+        //===============================================================================================
         // - si ORDER_HOW_MANY_PRIME
         //       . transmettre la réponse au client
         int howmany = 0;
@@ -136,13 +146,12 @@ void loop(/* paramètres */)
         myassert(ret == sizeof(int), "ecriture compromise");
 
         sc = sortie_SC(56);
-    // if(// à chaque fois qu'un worker renvoie true
-    //  {
-    // 	nb_prime++;
-    // }
+    
+
+        //===============================================================================================
         // - si ORDER_HIGHEST_PRIME
         //       . transmettre la réponse au client
-        /*
+        
         int max = 0;
         int result;
         if(max < result)
