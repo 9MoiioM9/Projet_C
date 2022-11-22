@@ -61,9 +61,9 @@ bool worker_to_master(int rep[2])
     ret = read(rep[0], &res, sizeof(bool));
     myassert(ret == sizeof(bool), "zkeogzoi");
 
-    close(rep[0]);
+    close(rep[0]);tube_cm
 
-    return res; 
+    return res; tube_cm
 }
 */
 
@@ -185,11 +185,14 @@ int main(int argc, char * argv[])
     int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
 
-    sema_precedence = semctl(CLE_MASTER, 1, SETVAL, 17);
+    sema_precedence = semctl(CLE_MASTER, 1, SETVAL, 1);
     myassert(sema_precedence != -1, "pb de precedence");
 
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
-    myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
+    myassert(sema_mutex == -1, "le semaphore ne s'est pas creer");
+
+    sema_mutex = semctl(CLE_CLIENT, 1, SETVAL, 1);
+    myassert(sema_mutex == -1, "pb de mutex");
     
 
     // - création des tubes nommés
