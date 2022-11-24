@@ -71,35 +71,50 @@ bool worker_to_master(int rep[2])
  ************************************************************************/
 void loop(/* paramètres */)
 {
+    int master_client, client_master; 
+    int commande, nb_test,sc,ret;
+    int r = 1;
+    int howmany = 0;
     // boucle infinie :
     while (true){
+        printf("\n DANS BOUCLE INFINI \n");
+
         // - ouverture des tubes (cf. rq client.c)
-        int master_client = open("master_client", O_WRONLY);
+        master_client = open("master_client", O_WRONLY);
+        printf("\n VERIF BOUCLE INFINI \n");
+
         myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
 
-        int client_master = open("client_master", O_RDONLY);
+        printf("\n ICI? \n");
+
+
+        client_master = open("client_master", O_RDONLY);
         myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
         
-    
-        int envoi[2];
-        int resp[2];
+        printf("\n RRRRRRRRRRRRRRRRRRRRRRR\n");
+
+        // int envoi[2];
+        // int resp[2];
         
-        int commande, nb_test,sc;
+       
         // - attente d'un ordre du client (via le tube nommé)
 
-        
+        printf("\n RRRRRRRRRRRRRRRRRRRRRRR\n");
 
-        int ret = read(client_master, &commande, sizeof(int));
+        ret = read(client_master, &commande, sizeof(int));
         myassert(ret == sizeof(int), "lecture compromise");
-            printf("test d'ordre : %d ", commande);
+       
+        printf("\n test d'ordre : %d \n", commande);
        
 
 
         //===============================================================================================
         // - si ORDER_STOP
-        int r = 1;
+        
         if(commande == -1)
         {
+        printf("\n STOP\n");
+
             ret = write(master_client, &r, sizeof(int));
             myassert(ret == sizeof(int), "lecture compromise");
         }
@@ -117,33 +132,37 @@ void loop(/* paramètres */)
         //             on leur envoie tous les nombres entre M+1 et N-1
         //             note : chaque envoie déclenche une réponse des workers
         //       . envoyer N dans le pipeline
-        if(commande == 1)
-        {
-            int retFork = fork();
-            if(retFork == 0)
-            {
-                //exec à faire
-            }
-            myassert(retFork != -1, "problème au niveau du fork pour les workers");
 
-            master_to_worker(envoi, nb_test);
-        //       . récupérer la réponse
-            int retour = worker_to_master(resp);
-        //       . la transmettre au client
-            ret = write(master_client, &retour, sizeof(int));
-            myassert(ret == sizeof(int), "ecriture compromise");
-        }
+        //TODO kdskflskf
+        
+        // if(commande == 1)
+        // {
+        //     int retFork = fork();
+        //     if(retFork == 0)
+        //     {
+        //         //exec à faire
+        //     }
+        //     myassert(retFork != -1, "problème au niveau du fork pour les workers");
+
+        //     master_to_worker(envoi, nb_test);
+        // //       . récupérer la réponse
+        //     int retour = worker_to_master(resp);
+        // //       . la transmettre au client
+        //     ret = write(master_client, &retour, sizeof(int));
+        //     myassert(ret == sizeof(int), "ecriture compromise");
+        // }
         
         //===============================================================================================
         // - si ORDER_HOW_MANY_PRIME
         //       . transmettre la réponse au client
-        int howmany = 0;
+        
 
         printf("\nReponse : %d\n", howmany);
 
         sc = entree_SC(56);
         ret = write(master_client, &howmany, sizeof(int));
         myassert(ret == sizeof(int), "ecriture compromise");
+        printf("\n OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
 
         sc = sortie_SC(56);
     
@@ -152,12 +171,12 @@ void loop(/* paramètres */)
         // - si ORDER_HIGHEST_PRIME
         //       . transmettre la réponse au client
         
-        int max = 0;
-        int result;
-        if(max < result)
-        {
-            max = result;
-        }
+        // int max = 0;
+        // int result;
+        // if(max < result)
+        // {
+        //     max = result;
+        // }
 
         // - fermer les tubes nommés
         printf("\nIICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIii\n");
@@ -203,6 +222,7 @@ int main(int argc, char * argv[])
         usage(argv[0], NULL);
 
     // - création des sémaphores
+
     int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
     
@@ -218,6 +238,8 @@ int main(int argc, char * argv[])
     myassert(sema_ope != -1 , "\nOpération invalide\n");
 
     // - création des tubes nommés
+    
+
 
     int tube_mc = mkfifo("master_client", 0644);
     myassert(tube_mc != -1, "problème au niveau du tube master_client");

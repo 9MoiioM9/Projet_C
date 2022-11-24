@@ -25,6 +25,8 @@ static int NB_Prime;
 
 int entree_SC(int key)
 {
+    printf("\n SECTION CRITICA\n");
+
     key_t cle_client = ftok(FICHIER, key);
     myassert(cle_client != -1, "\nPas possible de récupérer la clé\n");
 
