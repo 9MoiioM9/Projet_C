@@ -171,10 +171,12 @@ int main(int argc, char * argv[])
     }
 
     //    - sortir de la section critique
-    sc = sortie_SC(56);
+    if(order != -1){
+        sc = sortie_SC(56);
+        sc = sortie_SC(54); //dès que le client reçoit sa réponse il libère la ressource 
+                            //pour laisser l'accés à un autre client.
+    }
 
-    sc = sortie_SC(54); //dès que le client reçoit sa réponse il libère la ressource 
-                        //pour laisser l'accés à un autre client.
 
 
     return EXIT_SUCCESS;

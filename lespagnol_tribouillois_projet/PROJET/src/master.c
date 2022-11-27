@@ -91,6 +91,10 @@ void loop(/* paramètres */)
 
     // boucle infinie :
     while (true){
+        
+        //Pour tenter de bloquer le master mettre entree_sc debut master et fin client 
+        //je vais comprendre normalement
+        
         val_test++;
         printf("\n ENTREE DANS LOOP, Ordre numero : %d\n", val_test);
         // - ouverture des tubes (cf. rq client.c)
@@ -139,17 +143,15 @@ void loop(/* paramètres */)
         // - si ORDER_HIGHEST_PRIME
         //       . transmettre la réponse au client
 
-        sleep(3);
+        sleep(3); //evite le pb de priorité avec le client 
         
         // - fermer les tubes nommés
         printf("\n FERMETURE DES TUBES MASTER VERS CLIENT ET INVERSE\n");
         close(master_client);
         close(client_master);
+
         // - attendre ordre du client avant de continuer (sémaphore : précédence)
         // - revenir en début de boucle
-        //
-        // il est important d'ouvrir et fermer les tubes nommés à chaque itération
-
 
         if(commande == -1){
             printf("\n LE MASTER VA BREAK\n "); 
