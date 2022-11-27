@@ -25,7 +25,6 @@ static int NB_Prime;
 
 int entree_SC(int key)
 {
-    printf("\n ENTREE SECTION CRITIC\n");
 
     key_t cle_client = ftok(FICHIER, key);
     myassert(cle_client != -1, "\nPas possible de récupérer la clé\n");
@@ -53,8 +52,6 @@ int sortie_SC(int key)
 
     int sema_ope = semop(sema_mutex, &operation, 1);
     myassert(sema_ope != -1 , "\nOpération invalide\n");
-
-    printf("\n END OF SECTION CRITIC\n");
 
     return sema_mutex;
 }

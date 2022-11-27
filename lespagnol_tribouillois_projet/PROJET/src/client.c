@@ -125,7 +125,6 @@ int main(int argc, char * argv[])
     int order = parseArgs(argc, argv, &number);
     printf("verif de l'ordre : %d\n", order); // pour éviter le warning
     
-    
     int sc, master_client, client_master, reponse;
 
     //Gestin des ordres "normaux"
@@ -138,55 +137,57 @@ int main(int argc, char * argv[])
 
     //Ouverture de la lecture de l'ordre et écriture de la réponse
     //=======================================================================    
+    if(order != 4){
     
-    master_client = open("master_client", O_RDONLY);
-    myassert(master_client != -1, "ouverture en mode lecture impossible");
+        master_client = open("master_client", O_RDONLY);
+        myassert(master_client != -1, "ouverture en mode lecture impossible");
 
-    client_master = open("client_master", O_WRONLY);
-    myassert(client_master != -1, "ouverture en mode ecriture impossible");
+        client_master = open("client_master", O_WRONLY);
+        myassert(client_master != -1, "ouverture en mode ecriture impossible");
+
+        sc = sortie_SC(56);
+        
+        int tst = write(client_master, &order, sizeof(int));
+        myassert(tst == sizeof(int), "pb d'envoie d'ordre");
     
-    int tst = write(client_master, &order, sizeof(int));
-    myassert(tst == sizeof(int), "pb d'envoie d'ordre");
-
     //=======================================================================
+        sc = entree_SC(54); //sema_mutex blocant les autres clients
+        sleep(2); //éviter le blocage de ressource au niveau de la section critique
 
-    sleep(2);
+        sc = entree_SC(56); //prend la ressource pour lire réponse
 
-    sc = entree_SC(56);
+        tst = read(master_client, &reponse, sizeof(int));
+        myassert(tst == sizeof(int), "lecture compromise");
 
-    tst = read(master_client, &reponse, sizeof(int));
-    myassert(tst == sizeof(int), "lecture compromise");
+        ReponseMaster(order, reponse);
 
-    ReponseMaster(order, reponse);
+        if(reponse == 1)
+        {
+            sleep(5);
 
-    if(reponse == 1)
-    {
-        sleep(5);
-
-        close(master_client);
-        close(client_master);
+            close(master_client);
+            close(client_master);
+        }
     }
 
+    //    - sortir de la section critique
     sc = sortie_SC(56);
 
-    //    - sortir de la section critique
-
-    //sc = sortie_SC();
-
+    sc = sortie_SC(54); //dès que le client reçoit sa réponse il libère la ressource 
+                        //pour laisser l'accés à un autre client.
 
 
-    
-    
     return EXIT_SUCCESS;
 }
 
 // order peut valoir 5 valeurs (cf. master_client.h) :
-    //      - ORDER_COMPUTE_PRIME_LOCAL
-    //      - ORDER_STOP
-    //      - ORDER_COMPUTE_PRIME
-    //      - ORDER_HOW_MANY_PRIME
-    //      - ORDER_HIGHEST_PRIME
-        // si c'est ORDER_COMPUTE_PRIME_LOCAL
+    //      - ORDER_COMPUTE_PRIME_LOCAL     4
+    //      - ORDER_STOP                   -1
+    //      - ORDER_COMPUTE_PRIME           1
+    //      - ORDER_HOW_MANY_PRIME          2
+    //      - ORDER_HIGHEST_PRIME           3
+
+    // si c'est ORDER_COMPUTE_PRIME_LOCAL
     //    alors c'est un code complètement à part multi-thread
     // sinon
     //    - entrer en section critique :
@@ -200,34 +201,7 @@ int main(int argc, char * argv[])
     if(order == ORDER_COMPUTE_PRIME_LOCAL)
     {
         //TODO code thread 
-    }else {
-
-        //  gestion SC
-        sc = entree_SC();
-        
-        //  gestion des tubes
-        master_client = open("master_client", O_RDONLY);
-        myassert(master_client != -1, "ouverture en mode lecture impossible");
-
-        client_master = open("client_master", O_WRONLY);
-        myassert(client_master != -1, "ouverture en mode ecriture impossible");
-        
-    }*/
-    
-    //           . les ouvertures sont bloquantes, il faut s'assurer que
-    //             le master ouvre les tubes dans le même ordre
-    //    - envoyer l'ordre et les données éventuelles au master
-
-    //    - attendre la réponse sur le second tube
-    //sleep(3);
-
-    //blocage du master suite à sa réponse
-
-    //    - libérer les ressources (fermeture des tubes, ...)
-
-    //close(master_client);
-    //close(client_master);
-
+    }else { */
 
 //    - débloquer le master grâce à un second sémaphore (cf. ci-dessous)
     

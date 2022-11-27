@@ -76,10 +76,10 @@ bool worker_to_master(int rep[2])
  ************************************************************************/
 void loop(/* paramètres */)
 {
-    int master_client, client_master; 
-    int commande, nb_test,sc,ret;
+    int commande, nb_test, sc, ret, master_client, client_master;
     int r = 1;
     int howmany = 5;
+    int val_test = 0;
 
     int errnum;
     // int max = 0;
@@ -91,8 +91,8 @@ void loop(/* paramètres */)
 
     // boucle infinie :
     while (true){
-        printf("\n ENTREE DANS BOUCLE \n");
-
+        val_test++;
+        printf("\n ENTREE DANS LOOP, Ordre numero : %d\n", val_test);
         // - ouverture des tubes (cf. rq client.c)
         master_client = open("master_client", O_WRONLY);
         myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
@@ -112,8 +112,6 @@ void loop(/* paramètres */)
        
         // - attente d'un ordre du client (via le tube nommé)
 
-        printf("\n ENTREE EN LECTURE\n");
-
         ret = read(client_master, &commande, sizeof(int));
         myassert(ret == sizeof(int), "lecture compromise");
        
@@ -131,16 +129,10 @@ void loop(/* paramètres */)
     
             printf("\nReponse : %d\n", howmany);
 
-            sc = entree_SC(56);
 
-            printf("ECRITURE DE LA REPONSE");
+            printf("\nECRITURE DE LA REPONSE\n");
             ret = write(master_client, &howmany, sizeof(int));
             myassert(ret == sizeof(int), "ecriture compromise");
-
-
-            sc = sortie_SC(56);
-
-            printf("\n Sortie correcte \n");
         }
 
         //===============================================================================================
@@ -157,11 +149,13 @@ void loop(/* paramètres */)
         // - revenir en début de boucle
         //
         // il est important d'ouvrir et fermer les tubes nommés à chaque itération
-        // voyez-vous pourquoi ?
+
+
         if(commande == -1){
             printf("\n LE MASTER VA BREAK\n "); 
             break;
         }
+        
     }
     
 }
@@ -220,24 +214,8 @@ int main(int argc, char * argv[])
 // N'hésitez pas à faire des fonctions annexes ; si les fonctions main
 // et loop pouvaient être "courtes", ce serait bien
 
-/*
-int reponseMaster(){
-    key_t cle_master = ftok(FICHIER, CLE_MASTER);
-    myassert(cle_master != -1, "\nPas possible de récupérer la clé\n"); 
 
-    int sema_rep = semget(CLE_MASTER, 1, 0);
-    myassert(sema_rep != -1, "\nIncapable de faire le mutex\n");
-
-    struct sembuf operation = {0, -1 , 0};
-
-    int sema_ope = semop(sema_rep, &operation, 1);
-    myassert(sema_ope != -1 , "\nOpération invalide\n");
-
-    return sema_rep;
-}
-*/
-
-// demader au worker de se fermer
+// demander au worker de se fermer
         //       . envoyer ordre de fin au premier worker et attendre sa fin
         //       . envoyer un accusé de réception au client
 
@@ -247,12 +225,12 @@ int reponseMaster(){
         // - si ORDER_COMPUTE_PRIME
         //       . récupérer le nombre N à tester provenant du client
         //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
-        //             il faut connaître le plus nombre (M) déjà enovoyé aux workers
+        //             il faut connaître le plus nombre (M) déjà envoyé aux workers
         //             on leur envoie tous les nombres entre M+1 et N-1
         //             note : chaque envoie déclenche une réponse des workers
         //       . envoyer N dans le pipeline
 
-        //TODO kdskflskf
+        //TODO 
         
         // if(commande == 1)
         // {
