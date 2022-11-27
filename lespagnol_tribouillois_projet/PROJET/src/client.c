@@ -123,10 +123,65 @@ int main(int argc, char * argv[])
 {
     int number = 0;
     int order = parseArgs(argc, argv, &number);
-    printf("%d\n", order); // pour éviter le warning
+    printf("verif de l'ordre : %d\n", order); // pour éviter le warning
+    
+    
+    int sc, master_client, client_master, reponse;
+
+    //Gestin des ordres "normaux"
+
+    //=======================================================================
+
+    //Gestion de ORDER_COMPUTE_PRIME_LOCAL
+    
+    //=======================================================================
+
+    //Ouverture de la lecture de l'ordre et écriture de la réponse
+    //=======================================================================    
+    
+    master_client = open("master_client", O_RDONLY);
+    myassert(master_client != -1, "ouverture en mode lecture impossible");
+
+    client_master = open("client_master", O_WRONLY);
+    myassert(client_master != -1, "ouverture en mode ecriture impossible");
+    
+    int tst = write(client_master, &order, sizeof(int));
+    myassert(tst == sizeof(int), "pb d'envoie d'ordre");
+
+    //=======================================================================
+
+    sleep(2);
+
+    sc = entree_SC(56);
+
+    tst = read(master_client, &reponse, sizeof(int));
+    myassert(tst == sizeof(int), "lecture compromise");
+
+
+    printf("\nReponse : %d\n", reponse);
+
+    if(reponse == 1)
+    {
+        sleep(5);
+
+        close(master_client);
+        close(client_master);
+    }
+
+    sc = sortie_SC(56);
+
+    //    - sortir de la section critique
+
+    //sc = sortie_SC();
+
+
 
     
-    // order peut valoir 5 valeurs (cf. master_client.h) :
+    
+    return EXIT_SUCCESS;
+}
+
+// order peut valoir 5 valeurs (cf. master_client.h) :
     //      - ORDER_COMPUTE_PRIME_LOCAL
     //      - ORDER_STOP
     //      - ORDER_COMPUTE_PRIME
@@ -141,11 +196,7 @@ int main(int argc, char * argv[])
     
     //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
 
-    int sc, master_client, client_master, reponse;
-    
-    sc = entree_SC(56);
 
-    
 /*
     if(order == ORDER_COMPUTE_PRIME_LOCAL)
     {
@@ -164,15 +215,6 @@ int main(int argc, char * argv[])
         
     }*/
     
-    master_client = open("master_client", O_RDONLY);
-    myassert(master_client != -1, "ouverture en mode lecture impossible");
-
-    client_master = open("client_master", O_WRONLY);
-    myassert(client_master != -1, "ouverture en mode ecriture impossible");
-    
-    int tst = write(client_master, &order, sizeof(int));
-    myassert(tst == sizeof(int), "ouais");
-
     //           . les ouvertures sont bloquantes, il faut s'assurer que
     //             le master ouvre les tubes dans le même ordre
     //    - envoyer l'ordre et les données éventuelles au master
@@ -180,41 +222,18 @@ int main(int argc, char * argv[])
     //    - attendre la réponse sur le second tube
     //sleep(3);
 
-    tst = read(master_client, &reponse, sizeof(int));
-    myassert(tst == sizeof(int), "lecture compromise");
-
-
-    printf("\nReponse : %d\n", reponse);
-
-    if(reponse == 1)
-    {
-        close(master_client);
-        close(client_master);
-    }
-
-    sc = sortie_SC(56);
-    /*
-    master_client = read("client_master", &reponse, sizeof(int));
-    myassert(master_client != sizeof(int), "La lecture est compromise");
-    */
     //blocage du master suite à sa réponse
-    
-    //    - sortir de la section critique
 
-    //sc = sortie_SC();
-    
     //    - libérer les ressources (fermeture des tubes, ...)
 
-    close(master_client);
-    close(client_master);
+    //close(master_client);
+    //close(client_master);
 
-    //    - débloquer le master grâce à un second sémaphore (cf. ci-dessous)
+
+//    - débloquer le master grâce à un second sémaphore (cf. ci-dessous)
     
     // Une fois que le master a envoyé la réponse au client, il se bloque
     // sur un sémaphore ; le dernier point permet donc au master de continuer
     //
     // N'hésitez pas à faire des fonctions annexes ; si la fonction main
     // ne dépassait pas une trentaine de lignes, ce serait bien.
-    
-    return EXIT_SUCCESS;
-}

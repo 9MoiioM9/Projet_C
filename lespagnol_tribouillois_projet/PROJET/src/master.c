@@ -18,6 +18,11 @@
 #include "master_client.h"
 #include "master_worker.h"
 
+#include "errno.h"
+
+extern int errno ;
+
+
 /************************************************************************
  * Données persistantes d'un master
  ************************************************************************/
@@ -74,24 +79,32 @@ void loop(/* paramètres */)
     int master_client, client_master; 
     int commande, nb_test,sc,ret;
     int r = 1;
-    int howmany = 0;
+    int howmany = 5;
+
+    int errnum;
+    // int max = 0;
+    // int result;
+    // if(max < result)
+    // {
+    //     max = result;
+    // }
+
     // boucle infinie :
     while (true){
-        printf("\n DANS BOUCLE INFINI \n");
+        printf("\n ENTREE DANS BOUCLE \n");
 
         // - ouverture des tubes (cf. rq client.c)
         master_client = open("master_client", O_WRONLY);
-        printf("\n VERIF BOUCLE INFINI \n");
-
         myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
-
-        printf("\n ICI? \n");
-
-
+        
         client_master = open("client_master", O_RDONLY);
         myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
-        
-        printf("\n RRRRRRRRRRRRRRRRRRRRRRR\n");
+
+        //GESTION ERREUR
+        errnum = errno; 
+        fprintf(stderr, "Value of errno: %d\n", errno); 
+        perror("Error printed by perror"); 
+        fprintf(stderr, "Error opening file: %s\n", strerror( errnum )); 
 
         // int envoi[2];
         // int resp[2];
@@ -99,87 +112,44 @@ void loop(/* paramètres */)
        
         // - attente d'un ordre du client (via le tube nommé)
 
-        printf("\n RRRRRRRRRRRRRRRRRRRRRRR\n");
+        printf("\n ENTREE EN LECTURE\n");
 
         ret = read(client_master, &commande, sizeof(int));
         myassert(ret == sizeof(int), "lecture compromise");
        
-        printf("\n test d'ordre : %d \n", commande);
+        printf("\nordre reçu est : %d \n", commande);
        
-
-
         //===============================================================================================
         // - si ORDER_STOP
         
-        if(commande == -1)
-        {
-        printf("\n STOP\n");
+        if(commande == -1){
+            printf("\n STOP\n");
 
-            ret = write(master_client, &r, sizeof(int));
+            ret = write(master_client, &r, sizeof(int)); //r = 1 pour true 
             myassert(ret == sizeof(int), "lecture compromise");
-        }
-        // demader au worker de se fermer
-        //       . envoyer ordre de fin au premier worker et attendre sa fin
-        //       . envoyer un accusé de réception au client
-
-
-
-        //===============================================================================================
-        // - si ORDER_COMPUTE_PRIME
-        //       . récupérer le nombre N à tester provenant du client
-        //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
-        //             il faut connaître le plus nombre (M) déjà enovoyé aux workers
-        //             on leur envoie tous les nombres entre M+1 et N-1
-        //             note : chaque envoie déclenche une réponse des workers
-        //       . envoyer N dans le pipeline
-
-        //TODO kdskflskf
-        
-        // if(commande == 1)
-        // {
-        //     int retFork = fork();
-        //     if(retFork == 0)
-        //     {
-        //         //exec à faire
-        //     }
-        //     myassert(retFork != -1, "problème au niveau du fork pour les workers");
-
-        //     master_to_worker(envoi, nb_test);
-        // //       . récupérer la réponse
-        //     int retour = worker_to_master(resp);
-        // //       . la transmettre au client
-        //     ret = write(master_client, &retour, sizeof(int));
-        //     myassert(ret == sizeof(int), "ecriture compromise");
-        // }
-        
-        //===============================================================================================
-        // - si ORDER_HOW_MANY_PRIME
-        //       . transmettre la réponse au client
-        
-
-        printf("\nReponse : %d\n", howmany);
-
-        sc = entree_SC(56);
-        ret = write(master_client, &howmany, sizeof(int));
-        myassert(ret == sizeof(int), "ecriture compromise");
-        printf("\n OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
-
-        sc = sortie_SC(56);
+        }else {
     
+            printf("\nReponse : %d\n", howmany);
+
+            sc = entree_SC(56);
+
+            printf("ECRITURE DE LA REPONSE");
+            ret = write(master_client, &howmany, sizeof(int));
+            myassert(ret == sizeof(int), "ecriture compromise");
+
+
+            sc = sortie_SC(56);
+
+            printf("\n Sortie correcte \n");
+        }
 
         //===============================================================================================
         // - si ORDER_HIGHEST_PRIME
         //       . transmettre la réponse au client
-        
-        // int max = 0;
-        // int result;
-        // if(max < result)
-        // {
-        //     max = result;
-        // }
 
+        sleep(3);
         // - fermer les tubes nommés
-        printf("\nIICIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIii\n");
+        printf("\n FERMETURE DES TUBES MASTER VERS CLIENT ET INVERSE\n");
         close(master_client);
         close(client_master);
         // - attendre ordre du client avant de continuer (sémaphore : précédence)
@@ -188,29 +158,12 @@ void loop(/* paramètres */)
         // il est important d'ouvrir et fermer les tubes nommés à chaque itération
         // voyez-vous pourquoi ?
         if(commande == -1){
+            printf("\n LE MASTER VA BREAK\n "); 
             break;
         }
     }
     
 }
-
-/*
-int reponseMaster(){
-    key_t cle_master = ftok(FICHIER, CLE_MASTER);
-    myassert(cle_master != -1, "\nPas possible de récupérer la clé\n"); 
-
-    int sema_rep = semget(CLE_MASTER, 1, 0);
-    myassert(sema_rep != -1, "\nIncapable de faire le mutex\n");
-
-    struct sembuf operation = {0, -1 , 0};
-
-    int sema_ope = semop(sema_rep, &operation, 1);
-    myassert(sema_ope != -1 , "\nOpération invalide\n");
-
-    return sema_rep;
-}
-*/
-
 
 /************************************************************************
  * Fonction principale
@@ -266,3 +219,57 @@ int main(int argc, char * argv[])
 // N'hésitez pas à faire des fonctions annexes ; si les fonctions main
 // et loop pouvaient être "courtes", ce serait bien
 
+/*
+int reponseMaster(){
+    key_t cle_master = ftok(FICHIER, CLE_MASTER);
+    myassert(cle_master != -1, "\nPas possible de récupérer la clé\n"); 
+
+    int sema_rep = semget(CLE_MASTER, 1, 0);
+    myassert(sema_rep != -1, "\nIncapable de faire le mutex\n");
+
+    struct sembuf operation = {0, -1 , 0};
+
+    int sema_ope = semop(sema_rep, &operation, 1);
+    myassert(sema_ope != -1 , "\nOpération invalide\n");
+
+    return sema_rep;
+}
+*/
+
+// demader au worker de se fermer
+        //       . envoyer ordre de fin au premier worker et attendre sa fin
+        //       . envoyer un accusé de réception au client
+
+
+
+        //===============================================================================================
+        // - si ORDER_COMPUTE_PRIME
+        //       . récupérer le nombre N à tester provenant du client
+        //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
+        //             il faut connaître le plus nombre (M) déjà enovoyé aux workers
+        //             on leur envoie tous les nombres entre M+1 et N-1
+        //             note : chaque envoie déclenche une réponse des workers
+        //       . envoyer N dans le pipeline
+
+        //TODO kdskflskf
+        
+        // if(commande == 1)
+        // {
+        //     int retFork = fork();
+        //     if(retFork == 0)
+        //     {
+        //         //exec à faire
+        //     }
+        //     myassert(retFork != -1, "problème au niveau du fork pour les workers");
+
+        //     master_to_worker(envoi, nb_test);
+        // //       . récupérer la réponse
+        //     int retour = worker_to_master(resp);
+        // //       . la transmettre au client
+        //     ret = write(master_client, &retour, sizeof(int));
+        //     myassert(ret == sizeof(int), "ecriture compromise");
+        // }
+        
+        //===============================================================================================
+        // - si ORDER_HOW_MANY_PRIME
+        //       . transmettre la réponse au client
