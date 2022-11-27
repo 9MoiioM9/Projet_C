@@ -103,7 +103,7 @@ void ReponseMaster(int order, int reponse)
         case ORDER_HIGHEST_PRIME : printf("\nLe nombre premier le plus grand calculé est %d\n",reponse);
         break;
 
-        case ORDER_HOW_MANY_PRIME : printf("\n %d ont été calculé\n",reponse);
+        case ORDER_HOW_MANY_PRIME : printf("\n %d nombre(s) premier(s) ont été calculé\n",reponse);
         break;
 
         case ORDER_STOP : 
@@ -150,15 +150,14 @@ int main(int argc, char * argv[])
 
     //=======================================================================
 
-    //sleep(2);
+    sleep(2);
 
     sc = entree_SC(56);
 
     tst = read(master_client, &reponse, sizeof(int));
     myassert(tst == sizeof(int), "lecture compromise");
 
-
-    printf("\nReponse : %d\n", reponse);
+    ReponseMaster(order, reponse);
 
     if(reponse == 1)
     {
