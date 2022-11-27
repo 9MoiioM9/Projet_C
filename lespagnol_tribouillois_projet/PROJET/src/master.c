@@ -148,6 +148,7 @@ void loop(/* paramètres */)
         //       . transmettre la réponse au client
 
         sleep(3);
+        
         // - fermer les tubes nommés
         printf("\n FERMETURE DES TUBES MASTER VERS CLIENT ET INVERSE\n");
         close(master_client);
