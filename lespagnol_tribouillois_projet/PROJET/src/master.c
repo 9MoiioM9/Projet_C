@@ -49,7 +49,7 @@ void master_to_worker(int envoi[2], int nbr)
     int ret;
 
     ret = write(envoi[1], &nbr, sizeof(int));
-    myassert(ret == sizeof(int),"reuighiez");
+    myassert(ret == sizeof(int),"Ecriture comprosie");
 
     close(envoi[1]);
 
@@ -64,7 +64,7 @@ bool worker_to_master(int rep[2])
     int ret;
 
     ret = read(rep[0], &res, sizeof(bool));
-    myassert(ret == sizeof(bool), "zkeogzoi");
+    myassert(ret == sizeof(bool), "Lecture compromise");
 
     close(rep[0]);
 
@@ -137,6 +137,23 @@ void loop(/* paramètres */)
             printf("\nECRITURE DE LA REPONSE\n");
             ret = write(master_client, &howmany, sizeof(int));
             myassert(ret == sizeof(int), "ecriture compromise");
+
+            if(commande == 1)
+            {
+                int retFork = fork();
+                if(retFork == 0)
+                {
+                    //exec à faire
+                }
+                myassert(retFork != -1, "problème au niveau du fork pour les workers");
+
+                master_to_worker(envoi, nb_test);
+                // récupérer la réponse
+                int retour = worker_to_master(resp);
+                //la transmettre au client
+                ret = write(master_client, &retour, sizeof(int));
+                myassert(ret == sizeof(int), "ecriture compromise");
+            }
         }
 
         //===============================================================================================
@@ -159,7 +176,7 @@ void loop(/* paramètres */)
         }
         
     }
-    
+
 }
 
 /************************************************************************
@@ -234,22 +251,7 @@ int main(int argc, char * argv[])
 
         //TODO 
         
-        // if(commande == 1)
-        // {
-        //     int retFork = fork();
-        //     if(retFork == 0)
-        //     {
-        //         //exec à faire
-        //     }
-        //     myassert(retFork != -1, "problème au niveau du fork pour les workers");
 
-        //     master_to_worker(envoi, nb_test);
-        // //       . récupérer la réponse
-        //     int retour = worker_to_master(resp);
-        // //       . la transmettre au client
-        //     ret = write(master_client, &retour, sizeof(int));
-        //     myassert(ret == sizeof(int), "ecriture compromise");
-        // }
         
         //===============================================================================================
         // - si ORDER_HOW_MANY_PRIME
