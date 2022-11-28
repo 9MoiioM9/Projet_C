@@ -48,6 +48,55 @@ static void parseArgs(int argc, char * argv[] /*, structure à remplir*/)
     // remplir la structure
 }
 
+int master_worker(int envoi[2])
+{
+    close(envoi[1]);
+    int ord;
+
+    ord = read(envoi[0], sizeof(int));
+    myassert(ord == sizeof(int),"pobleme de lecture d'un ordre");
+
+    close(envoi[0]);
+
+    return ord;
+
+    exit(EXIT_FAILURE);
+}
+
+int woker_master(int envoi[2], int nbr)
+{
+    close(envoi[0]);
+
+    int ret = write(envoi[1], &nbr, sizeof(int));
+    myassert(ret == sizeof(int),"probleme du retour du worker");
+
+    return envoi[1];
+
+}
+
+int worker_next(int envoi[2], int nbr)
+{
+    close(envoi[0]);
+
+    int ret = write(envoi[1], &nbr, sizeof(int));
+    myassert(ret == sizeof(int),"probleme transmission ordre work suiv");
+
+    return envoi[1];
+}
+
+int prev_worker(int envoi[2])
+{
+    close(envoi[1]);
+    int nbr;
+
+    nbr = read(envoi[0], sizeof(int));
+    myassert(nbr == sizeof(int),"pobleme transmission nb test ");
+
+    close(envoi[0]);
+
+    return nbr;
+}
+
 /************************************************************************
  * Boucle principale de traitement
  ************************************************************************/
@@ -56,14 +105,27 @@ void loop(/* paramètres */)
 {
     // boucle infinie :
     //    attendre l'arrivée d'un nombre à tester
+    int ord;
+    int next = -1;
+    while (true)
+    {
+        ord = master_worker;
+        if(ord == -1)
+        {}
+
     //    si ordre d'arrêt
     //       si il y a un worker suivant, transmettre l'ordre et attendre sa fin
     //       sortir de la boucle
+        if(ord == -1)
+        {
+            
+        }
     //    sinon c'est un nombre à tester, 4 possibilités :
     //           - le nombre est premier
     //           - le nombre n'est pas premier
     //           - s'il y a un worker suivant lui transmettre le nombre
     //           - s'il n'y a pas de worker suivant, le créer
+    }
 }
 
 /************************************************************************
@@ -73,6 +135,8 @@ void loop(/* paramètres */)
 int main(int argc, char * argv[])
 {
     parseArgs(argc, argv /*, structure à remplir*/);
+
+    
     
     // Si on est créé c'est qu'on est un nombre premier
     // Envoyer au master un message positif pour dire
