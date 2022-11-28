@@ -52,8 +52,9 @@ int master_worker(int envoi[2])
 {
     close(envoi[1]);
     int ord;
+    int m_w;
 
-    ord = read(envoi[0], sizeof(int));
+    m_w = read(envoi[0], &ord, sizeof(int));
     myassert(ord == sizeof(int),"pobleme de lecture d'un ordre");
 
     close(envoi[0]);
@@ -88,8 +89,9 @@ int prev_worker(int envoi[2])
 {
     close(envoi[1]);
     int nbr;
+    int p_w;
 
-    nbr = read(envoi[0], sizeof(int));
+    p_w = read(envoi[0], &nbr, sizeof(int));
     myassert(nbr == sizeof(int),"pobleme transmission nb test ");
 
     close(envoi[0]);
@@ -106,19 +108,33 @@ void loop(/* paramètres */)
     // boucle infinie :
     //    attendre l'arrivée d'un nombre à tester
     int ord;
+    int rep;
+    int ret = 1; // retour d'un ordre au master
     int next = -1;
+    int W_N[2];
+    int M_W[2];
+    int W_M[2];
+    int P_W[2];
+
     while (true)
     {
         ord = master_worker;
-        if(ord == -1)
-        {}
+        
 
     //    si ordre d'arrêt
     //       si il y a un worker suivant, transmettre l'ordre et attendre sa fin
     //       sortir de la boucle
         if(ord == -1)
         {
-            
+            if(next != -1)
+            {
+                next = worker_next(W_N, ord);
+                close(W_N[1]);
+            }
+            else rep = woker_master(W_M, ret);
+            close(M_W[0]);
+            break;
+
         }
     //    sinon c'est un nombre à tester, 4 possibilités :
     //           - le nombre est premier
