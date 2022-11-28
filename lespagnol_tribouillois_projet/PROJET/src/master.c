@@ -110,8 +110,8 @@ void loop(/* paramètres */)
         perror("Error printed by perror"); 
         fprintf(stderr, "Error opening file: %s\n", strerror( errnum )); 
 
-        // int envoi[2];
-        // int resp[2];
+        int envoi[2];
+        int resp[2];
         
        
         // - attente d'un ordre du client (via le tube nommé)
