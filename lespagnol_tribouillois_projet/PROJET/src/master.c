@@ -137,7 +137,9 @@ void loop(/* paramètres */)
             printf("\nECRITURE DE LA REPONSE\n");
             ret = write(master_client, &howmany, sizeof(int));
             myassert(ret == sizeof(int), "ecriture compromise");
-
+        
+        //===============================================================================================
+        // - si ORDER_COMPUTE_PRIME
             if(commande == 1)
             {
                 int retFork = fork();
