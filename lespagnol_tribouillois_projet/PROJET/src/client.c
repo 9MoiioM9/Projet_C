@@ -139,10 +139,10 @@ int main(int argc, char * argv[])
     //=======================================================================    
     if(order != 4){
     
-        master_client = open("master_client", O_RDONLY);
+        master_client = open(Pipe_Master_to_Client, O_RDONLY);
         myassert(master_client != -1, "ouverture en mode lecture impossible");
 
-        client_master = open("client_master", O_WRONLY);
+        client_master = open(Pipe_Client_to_Master, O_WRONLY);
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
 
         sc = sortie_SC(56);

@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/stat.h>  //mkfifo 
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
@@ -92,23 +93,17 @@ void loop(/* paramètres */)
     // boucle infinie :
     while (true){
         
-        //Pour tenter de bloquer le master mettre entree_sc debut master et fin client 
-        //je vais comprendre normalement
+        printf("\nJ'attends\n");
         
         val_test++;
-        printf("\n ENTREE DANS LOOP, Ordre numero : %d\n", val_test);
         // - ouverture des tubes (cf. rq client.c)
-        master_client = open("master_client", O_WRONLY);
-        myassert(master_client != -1, "le tube master_client ne s'est pas ouvert");
+        master_client = open(Pipe_Master_to_Client, O_WRONLY);
+        myassert(master_client != -1, "le tube master vers client ne s'est pas ouvert");
         
-        client_master = open("client_master", O_RDONLY);
-        myassert(client_master != -1, "le tube client_master ne s'est pas ouvert");
+        client_master = open(Pipe_Client_to_Master, O_RDONLY);
+        myassert(client_master != -1, "le tube client vers master ne s'est pas ouvert");
 
-        //GESTION ERREUR
-        errnum = errno; 
-        fprintf(stderr, "Value of errno: %d\n", errno); 
-        perror("Error printed by perror"); 
-        fprintf(stderr, "Error opening file: %s\n", strerror( errnum )); 
+        printf("\nOrdre numero : %d\n", val_test);
 
         int envoi[2];
         int resp[2];
@@ -207,13 +202,11 @@ int main(int argc, char * argv[])
     myassert(sema_ope != -1 , "\nOpération invalide\n");
 
     // - création des tubes nommés
-    
 
-
-    int tube_mc = mkfifo("master_client", 0644);
-    myassert(tube_mc != -1, "problème au niveau du tube master_client");
-    int tube_cm = mkfifo("client_master", 0644);
-    myassert(tube_cm != 1, "problème au niveau du tube client_master");
+    int tube_mc = mkfifo(Pipe_Master_to_Client, 0644);
+    myassert(tube_mc != -1, "problème au niveau du tube master vers client");
+    int tube_cm = mkfifo(Pipe_Client_to_Master, 0644);
+    myassert(tube_cm != 1, "problème au niveau du tube client vers master");
     
     // - création du premier worker
 
@@ -223,10 +216,16 @@ int main(int argc, char * argv[])
 
     // destruction des tubes nommés, des sémaphores, ...
     
+    int delete_sema = semctl(sema_mutex, -1, IPC_RMID);
+    myassert(delete_sema != -1, "la semaphore mutex s'est mal détruite");
 
-    tube_mc = unlink("master_client");
+    delete_sema = semctl(sema_precedence, -1, IPC_RMID);
+    myassert(delete_sema != -1, "la semaphore précédence s'est mal détruite");
+
+
+    tube_mc = unlink(Pipe_Master_to_Client);
     myassert(tube_mc != -1, "Le tube 1 ne s'est pas bien détruit");
-    tube_cm = unlink("client_master");
+    tube_cm = unlink(Pipe_Client_to_Master);
     myassert(tube_cm != -1, "le tube 2 ne s'est pas détruit correctement");
 
     return EXIT_SUCCESS;

@@ -13,9 +13,21 @@
 #define ORDER_HOW_MANY_PRIME      2
 #define ORDER_HIGHEST_PRIME       3
 #define ORDER_COMPUTE_PRIME_LOCAL 4   // ne concerne pas le master
-#define CLE_MASTER  56
-#define CLE_CLIENT  54
-#define FICHIER "master_client.h"
+
+
+//Gestion de nos constantes
+#define CLE_MASTER  56  //clé pour la sémaphore master/client
+#define CLE_CLIENT  54  //clé pour la gestion du mutex
+
+#define FICHIER "master_client.h" 
+
+#define Pipe_Master_to_Client   "master_client" //tube nommé de master vers client
+#define Pipe_Client_to_Master   "client_master" //tube nommé de client vers client
+
+//ORDER_COMPUTE_PRIME
+#define No_Prime    0   //si le nombre est pas premier alors 0
+#define Is_Prime    1   //si le nombre est premier alors 1
+
 
 
 // bref n'hésitez à mettre nombre de fonctions avec des noms explicites
