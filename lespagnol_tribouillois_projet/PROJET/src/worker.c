@@ -111,7 +111,7 @@ int prev_worker(int envoi[2])
  * Boucle principale de traitement
  ************************************************************************/
 
-void loop(/* paramètres */)
+void loop(/* paramètres */)     //mettre worker_data en paramètre
 {
     // boucle infinie :
     //    attendre l'arrivée d'un nombre à tester
@@ -135,12 +135,12 @@ void loop(/* paramètres */)
         if(ord == -1)
         {
             if(next != -1) //verif d'un worker suivant faire par rapport à la struct
-            {
-                next = worker_next(W_N, ord);   //changer avec la struct worker_data
-                close(W_N[1]);
+            {               //worker_data.worker_next != NO_NEXT
+                next = worker_next(W_N, ord);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
+                close(W_N[1]);                 //close(worker_data.worker_next[1]);
             }else rep = woker_master(W_M, ret); //pareil
 
-            close(M_W[0]);
+            close(M_W[0]);      //close(worker_data.worker_prev); je suppose 
             break;
 
         }
@@ -158,7 +158,7 @@ void loop(/* paramètres */)
 
 int main(int argc, char * argv[])
 {
-    parseArgs(argc, argv /*, structure à remplir*/);
+    parseArgs(argc, argv /*, structure à remplir*/);        //struct worker_data
 
     
     
@@ -166,7 +166,7 @@ int main(int argc, char * argv[])
     // Envoyer au master un message positif pour dire
     // que le nombre testé est bien premier
 
-    loop(/* paramètres */);
+    loop(/* paramètres */);         //mettre worker_data en paramètre
 
     // libérer les ressources : fermeture des files descriptors par exemple
 
