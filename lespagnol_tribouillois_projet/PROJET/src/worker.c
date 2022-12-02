@@ -23,6 +23,14 @@
 
 // on peut ici définir une structure stockant tout ce dont le worker
 // a besoin : le nombre premier dont il a la charge, ...
+struct worker
+{
+    /* data */
+    int nb_prime;           //nb premier transmi pour le calcul
+    int worker_next;        //pipe vers le prochain worker
+    int worker_prev;        //pipe vers le worker précédent
+    int worker_master;      //pipe pour envoi de la réponse au master
+}worker_data;
 
 
 /************************************************************************
@@ -110,7 +118,7 @@ void loop(/* paramètres */)
     int ord;
     int rep;
     int ret = 1; // retour d'un ordre au master
-    int next = -1;
+    int next = -1;  //faire par rapport à la constante NO_NEXT
     int W_N[2];
     int M_W[2];
     int W_M[2];
@@ -126,12 +134,12 @@ void loop(/* paramètres */)
     //       sortir de la boucle
         if(ord == -1)
         {
-            if(next != -1)
+            if(next != -1) //verif d'un worker suivant faire par rapport à la struct
             {
-                next = worker_next(W_N, ord);
+                next = worker_next(W_N, ord);   //changer avec la struct worker_data
                 close(W_N[1]);
-            }
-            else rep = woker_master(W_M, ret);
+            }else rep = woker_master(W_M, ret); //pareil
+
             close(M_W[0]);
             break;
 

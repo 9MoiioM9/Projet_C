@@ -97,10 +97,10 @@ void loop(/* paramètres */)
         
         val_test++;
         // - ouverture des tubes (cf. rq client.c)
-        master_client = open(Pipe_Master_to_Client, O_WRONLY);
+        master_client = open(PIPE_MASTER_TO_CLIENT, O_WRONLY);
         myassert(master_client != -1, "le tube master vers client ne s'est pas ouvert");
         
-        client_master = open(Pipe_Client_to_Master, O_RDONLY);
+        client_master = open(PIPE_CLIENT_TO_MASTER, O_RDONLY);
         myassert(client_master != -1, "le tube client vers master ne s'est pas ouvert");
 
         printf("\nOrdre numero : %d\n", val_test);
@@ -203,9 +203,9 @@ int main(int argc, char * argv[])
 
     // - création des tubes nommés
 
-    int tube_mc = mkfifo(Pipe_Master_to_Client, 0644);
+    int tube_mc = mkfifo(PIPE_MASTER_TO_CLIENT, 0644);
     myassert(tube_mc != -1, "problème au niveau du tube master vers client");
-    int tube_cm = mkfifo(Pipe_Client_to_Master, 0644);
+    int tube_cm = mkfifo(PIPE_CLIENT_TO_MASTER, 0644);
     myassert(tube_cm != 1, "problème au niveau du tube client vers master");
     
     // - création du premier worker
@@ -223,9 +223,9 @@ int main(int argc, char * argv[])
     myassert(delete_sema != -1, "la semaphore précédence s'est mal détruite");
 
 
-    tube_mc = unlink(Pipe_Master_to_Client);
+    tube_mc = unlink(PIPE_MASTER_TO_CLIENT);
     myassert(tube_mc != -1, "Le tube 1 ne s'est pas bien détruit");
-    tube_cm = unlink(Pipe_Client_to_Master);
+    tube_cm = unlink(PIPE_CLIENT_TO_MASTER);
     myassert(tube_cm != -1, "le tube 2 ne s'est pas détruit correctement");
 
     return EXIT_SUCCESS;

@@ -21,12 +21,12 @@
 
 #define FICHIER "master_client.h" 
 
-#define Pipe_Master_to_Client   "master_client" //tube nommé de master vers client
-#define Pipe_Client_to_Master   "client_master" //tube nommé de client vers client
+#define PIPE_MASTER_TO_CLIENT   "master_client" //tube nommé de master vers client
+#define PIPE_CLIENT_TO_MASTER   "client_master" //tube nommé de client vers client
 
 //ORDER_COMPUTE_PRIME
-#define No_Prime    0   //si le nombre est pas premier alors 0
-#define Is_Prime    1   //si le nombre est premier alors 1
+#define NO_PRIME    0   //si le nombre est pas premier alors 0
+#define IS_PRIME    1   //si le nombre est premier alors 1
 
 
 

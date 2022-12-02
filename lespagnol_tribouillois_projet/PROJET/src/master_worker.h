@@ -6,4 +6,7 @@
 //    - des fonctions communes (écriture dans un tube, ...)
 
 
+//Gestion de nos constantes 
+#define NO_NEXT     0  //si pas encore de worker suivant alors 0 jusqu'à la création d'un suivant
+
 #endif

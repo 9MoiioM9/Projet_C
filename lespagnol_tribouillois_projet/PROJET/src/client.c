@@ -94,7 +94,7 @@ void ReponseMaster(int order, int reponse)
     switch(order)
     {
         case ORDER_COMPUTE_PRIME : 
-            if(reponse == 1)
+            if(reponse == IS_PRIME)
             {
                 printf("Le nombre choisi est premier");
             }else printf("le nombre choisi n'est pas premier");
@@ -139,10 +139,10 @@ int main(int argc, char * argv[])
     //=======================================================================    
     if(order != 4){
     
-        master_client = open(Pipe_Master_to_Client, O_RDONLY);
+        master_client = open(PIPE_MASTER_TO_CLIENT, O_RDONLY);
         myassert(master_client != -1, "ouverture en mode lecture impossible");
 
-        client_master = open(Pipe_Client_to_Master, O_WRONLY);
+        client_master = open(PIPE_CLIENT_TO_MASTER, O_WRONLY);
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
 
         sc = sortie_SC(56);
@@ -152,6 +152,7 @@ int main(int argc, char * argv[])
     
     //=======================================================================
         sc = entree_SC(54); //sema_mutex blocant les autres clients
+
         sleep(2); //éviter le blocage de ressource au niveau de la section critique
 
         sc = entree_SC(56); //prend la ressource pour lire réponse
