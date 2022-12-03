@@ -14,9 +14,17 @@
 
 void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker);
 
-int worker_master(int envoi[2], int res);
-int master_worker(int envoi[2]);
-int worker_next(int envoi[2], int nbr_prime);
-int prev_worker(int envoi[2]);
+//gestion de lecture / écriture entre le master et les workers
+void tube_write(int tube_write, int nb_prime);
+int tube_read(int m_to_w);
+
+int test_fonction(int test[2], int val);
+
+//gestion des ouvertures écriture/lecture des pipes 
+int mode_write(int write_pipe[2]);
+int mode_read(int read_pipe[2]);
+
+//gestion de la fermerture d'un worker
+void closeWorker(int worker_prev, int worker_next, int worker_master);
 
 #endif

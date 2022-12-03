@@ -9,6 +9,8 @@
 
 #include "master_worker.h"
 
+#include <unistd.h>
+
 // fonctions éventuelles internes au fichier
 void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
 
@@ -38,50 +40,33 @@ void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
 
 }
 
-int master_worker(int envoi[2]){
+//Fonction qui lit le résultat venant soit de l'un des worker ou du master
+int tube_read(int m_to_w){ //pipe via la structure de worker 
 
-    close(envoi[1]);
-    int ord;
+    int nb_test;
     int m_w;
 
-    m_w = read(envoi[0], &ord, sizeof(int));
-    myassert(ord == sizeof(int),"pobleme de lecture d'un ordre");
+    m_w = read(m_to_w, &nb_test, sizeof(int));
+    myassert(nb_test == sizeof(int),"probleme de lecture d'un ordre");
 
-    close(envoi[0]);
-
-    return ord;
+    return nb_test;
 }
 
-int worker_master(int envoi[2], int res){
+int test_fonction(int test[2], int val){
+    close(test[0]);
 
-    close(envoi[0]);
+    int ret = write(test[1], &val, sizeof(int));
+    myassert(ret != -1, "probleme de transmission");
 
-    int ret = write(envoi[1], &res, sizeof(int));
-    myassert(ret == sizeof(int),"probleme du retour du worker");
-
-    return envoi[1];
+    return test[1];
 }
 
-int worker_next(int envoi[2], int nbr_prime){
 
-    close(envoi[0]);
+//Fonction qui transmet soit le nb à tester au worker suivant, soit le résultat au master
+void tube_write(int tube_write, int nb_prime){     //pipe et nb premier via struct worker
 
-    int ret = write(envoi[1], &nbr_prime, sizeof(int));
+    int ret = write(tube_write, &nb_prime, sizeof(int));
     myassert(ret == sizeof(int),"probleme ériture prime au work suiv");
-
-    return envoi[1];
-}
-int prev_worker(int envoi[2]){
-
-    close(envoi[1]);
-    int nb_prime, p_w;
-
-    p_w = read(envoi[0], &nb_prime, sizeof(int));
-    myassert(nb_prime == sizeof(int),"problème lecture du prime");
-
-    close(envoi[0]);
-
-    return nb_prime;
 }
 
 //renvoie un tube anonyme seulement en lecture après avoir fermé l'écriture
@@ -97,7 +82,25 @@ int mode_write(int write_pipe[2]){
 
     int is_write = close(write_pipe[0]);
     myassert(is_write != -1, "tube de lecture mal fermé ");
-    
+
     return write_pipe[1];
+}
+
+//gestion fermeture dans l'ordre des tubes 
+void closeWorker(int worker_prev, int worker_next, int worker_master){
+    
+    int close_worker;
+    close_worker = close(worker_prev);
+
+    //on vérifie qu'il existe un suivant avant
+    if (worker_next != NO_NEXT){
+        close_worker = close(worker_next);
+        myassert(close_worker != -1, "le worker_next ne s'est pas close");
+    }
+
+    //une fois que tous les workers sont bien fermés 
+    //on fini enfin par le pipe entre master/worker
+    close_worker = close(worker_master);
+    myassert(close_worker != -1, "Le pipe entre master/worker ne sais pas close");
 }
 // fonctions éventuelles proposées dans le .h

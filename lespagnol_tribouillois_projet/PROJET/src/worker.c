@@ -48,7 +48,7 @@ static void usage(const char *exeName, const char *message)
     exit(EXIT_FAILURE);
 }
 
-static void parseArgs(int argc, char * argv[] , worker_data *myworker/*, structure à remplir*/)
+static void parseArgs(int argc, char * argv[] , worker_data *myworker)
 {
     if (argc != 4)
         usage(argv[0], "Nombre d'arguments incorrect");
@@ -73,20 +73,20 @@ static void parseArgs(int argc, char * argv[] , worker_data *myworker/*, structu
  * Boucle principale de traitement
  ************************************************************************/
 
-void loop(worker_data myworker)     //mettre worker_data en paramètre
+void loop(worker_data myworker)
 {
     // boucle infinie :
     //    attendre l'arrivée d'un nombre à tester
     int value;
     int rep;
     int W_N[2];
-    int M_W[2];
+    //int M_W[2];
     int W_M[2];
-    int P_W[2];
+    //int P_W[2];
 
     while (true)
     {
-        value = master_worker;
+        value = tube_read(myworker.worker_prev);
         
 
     //    si ordre d'arrêt
@@ -96,9 +96,9 @@ void loop(worker_data myworker)     //mettre worker_data en paramètre
         {
             if(myworker.worker_next != NO_NEXT) //verif d'un worker suivant faire par rapport à la struct
             {                                   //worker_data.worker_next != NO_NEXT
-                myworker.worker_next = worker_next(W_N, value);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
+                myworker.worker_next = test_fonction(W_N, value);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
                 close(W_N[1]);                 //close(worker_data.worker_next[1]);
-            }else myworker.worker_master = worker_master(W_M, 1); 
+            }else myworker.worker_master = test_fonction(W_N, 1); 
 
             close(M_W[0]); //?      
             break;
@@ -136,7 +136,7 @@ int main(int argc, char * argv[])
 {
     worker_data myworker;
 
-    parseArgs(argc, argv, &myworker);        //struct worker_data
+    parseArgs(argc, argv, &myworker);     
 
     
     
@@ -144,24 +144,15 @@ int main(int argc, char * argv[])
     // Envoyer au master un message positif pour dire
     // que le nombre testé est bien premier
 
-    loop(myworker);         //mettre worker_data en paramètre
+    //envoie de son numero au master dès sa création
+    tube_write(myworker.worker_master, myworker.nb_prime);
+
+    loop(myworker);
 
     // libérer les ressources : fermeture des files descriptors par exemple
 
     //fermeture des workers 
-    int close_worker;
-    close_worker = close(myworker.worker_prev);
-
-    //on vérifie qu'il existe un suivant avant
-    if (myworker.worker_next != NO_NEXT){
-        close_worker = close(myworker.worker_next);
-        myassert(close_worker != -1, "le worker_next ne sais pas close");
-    }
-
-    //une fois que tous les workers sont bien fermés 
-    //on fini enfin par le pipe entre master/worker
-    close_worker = close(myworker.worker_master);
-    myassert(close_worker != -1, "Le pipe entre master/worker ne sais pas close");
+    closeWorker(myworker.worker_prev, myworker.worker_next, myworker.worker_master);
 
 
     return EXIT_SUCCESS;
