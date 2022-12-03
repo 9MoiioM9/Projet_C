@@ -19,8 +19,6 @@
 
 #include "master_client.h"
 
-static int NB_Prime;
-
 // fonctions éventuelles internes au fichier
 
 int entree_SC(int key)

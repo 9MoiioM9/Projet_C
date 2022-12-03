@@ -84,7 +84,6 @@ void loop(master_data myMaster)
 {
     int command, ret, master_client, client_master;
     int r = 1;
-    int howmany = 5;
     int val_test = 0;
     //petite vérification des pipe de notre struct master pour la communication avec worker
     ret = pipe(myMaster.master_to_worker);
@@ -167,7 +166,7 @@ void loop(master_data myMaster)
                         ret = write(master_client, &myMaster.highest_prime, sizeof(int));
                         myassert(ret == sizeof(int), "ecriture compromise");
                     }
-                    
+
         sleep(3); //evite le pb de priorité avec le client 
         
         // - fermer les tubes nommés
@@ -259,22 +258,3 @@ int main(int argc, char * argv[])
 // demander au worker de se fermer
         //       . envoyer ordre de fin au premier worker et attendre sa fin
         //       . envoyer un accusé de réception au client
-
-
-
-        //===============================================================================================
-        // - si ORDER_COMPUTE_PRIME
-        //       . récupérer le nombre N à tester provenant du client
-        //       . construire le pipeline jusqu'au nombre N-1 (si non encore fait) :
-        //             il faut connaître le plus nombre (M) déjà envoyé aux workers
-        //             on leur envoie tous les nombres entre M+1 et N-1
-        //             note : chaque envoie déclenche une réponse des workers
-        //       . envoyer N dans le pipeline
-
-        //TODO 
-        
-
-        
-        //===============================================================================================
-        // - si ORDER_HOW_MANY_PRIME
-        //       . transmettre la réponse au client

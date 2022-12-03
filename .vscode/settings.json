@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stdbool.h": "c",
-        "semaphore.h": "c"
+        "semaphore.h": "c",
+        "master_client.h": "c"
     }
 }

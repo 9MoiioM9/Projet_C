@@ -34,10 +34,9 @@ void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
     //On garde l'ordre par rapport à la fonction parseArgs !
 
     //On peut enfin créer notre worker avec un exec
-    exec(argv[0], argv);
+    execv(argv[0], argv);
     //Gestion d'erreur au cas ou si l'exec disfonctionne 
     //TODO erreur
-
 }
 
 //Fonction qui lit le résultat venant soit de l'un des worker ou du master
@@ -47,7 +46,7 @@ int im_Reading(int m_to_w){ //pipe via la structure de worker
     int m_w;
 
     m_w = read(m_to_w, &nb_test, sizeof(int));
-    myassert(nb_test == sizeof(int),"probleme de lecture d'un ordre");
+    myassert(m_w != -1,"probleme de lecture d'un ordre");
 
     return nb_test;
 }
