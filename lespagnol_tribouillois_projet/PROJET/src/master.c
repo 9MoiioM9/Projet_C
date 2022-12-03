@@ -198,12 +198,16 @@ int main(int argc, char * argv[])
     int prime_origine = 2;
 
     pid_t ret = fork();
-    myassert(ret != -1, "problème lors du premier fork");
+    myassert(ret != -1, "problème lors de la créatio du premier worker");
 
-    int master_write = mode_write(myMaster.master_to_worker);
-    int master_read = mode_read(myMaster.worker_to_master);
+    if(ret == 0){
+        int worker_write = mode_write(myMaster.master_to_worker);
+        int worker_read = mode_read(myMaster.worker_to_master);
 
-    worker_creation(prime_origine, master_read, master_write);
+        worker_creation(prime_origine, worker_write, worker_read);
+    }
+
+    
 
     // boucle infinie
     loop(myMaster);

@@ -117,8 +117,6 @@ void loop(worker_data myworker)
                         fork();
                         rep = worker_next(W_N, value);
                     }
-            
-                
         }
     //    sinon c'est un nombre à tester, 4 possibilités :
     //           - le nombre est premier
