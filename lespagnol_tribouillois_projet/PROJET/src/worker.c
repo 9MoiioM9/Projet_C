@@ -117,6 +117,7 @@ void loop(/* paramètres */)     //mettre worker_data en paramètre
     //    attendre l'arrivée d'un nombre à tester
     int ord;
     int rep;
+    int nbr_test;
     int ret = 1; // retour d'un ordre au master
     int next = -1;  //faire par rapport à la constante NO_NEXT
     int W_N[2];
@@ -149,6 +150,23 @@ void loop(/* paramètres */)     //mettre worker_data en paramètre
     //           - le nombre n'est pas premier
     //           - s'il y a un worker suivant lui transmettre le nombre
     //           - s'il n'y a pas de worker suivant, le créer
+
+        if(ord == 1)
+        {
+            if(nbr_test == moi)
+            {
+                rep = woker_master(W_M, 1);
+            } 
+            else if(nbr_test mod moi == 0){
+                rep = woker_master(W_M, -1);
+            }
+                else if(/* worker suiv déjà créé*/){
+                    rep = worker_next(W_N, nbr_test);
+                }else{
+                    //créer le worker suiv
+                    rep = worker_next(W_N, nbr_test);
+                }
+        }
     }
 }
 
