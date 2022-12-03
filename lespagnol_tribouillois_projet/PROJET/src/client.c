@@ -127,10 +127,6 @@ int main(int argc, char * argv[])
     
     int sc, master_client, client_master, reponse;
 
-    //Gestin des ordres "normaux"
-
-    //=======================================================================
-
     //Gestion de ORDER_COMPUTE_PRIME_LOCAL
     
     //=======================================================================

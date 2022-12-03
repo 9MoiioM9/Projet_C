@@ -60,8 +60,6 @@ void master_to_worker(int envoi[2], int nbr)
     myassert(ret == sizeof(int),"Ecriture comprosie");
 
     close(envoi[1]);
-
-    exit(EXIT_FAILURE);
 }
 
 bool worker_to_master(int rep[2])
@@ -84,15 +82,25 @@ bool worker_to_master(int rep[2])
  ************************************************************************/
 void loop(master_data myMaster)
 {
-    int commande, nb_test, ret, master_client, client_master;
+    int command, ret, master_client, client_master;
     int r = 1;
     int howmany = 5;
     int val_test = 0;
+    //petite vérification des pipe de notre struct master pour la communication avec worker
+    ret = pipe(myMaster.master_to_worker);
+    myassert(ret != -1,"création d'un pipe compromise");
+    ret = pipe(myMaster.worker_to_master);
+    myassert(ret != -1,"création d'un pipe compromise");
+
+    //Gestion des lectures/écritures entre master/worker
+    int master_com = mode_write(myMaster.master_to_worker);
+    int worker_com = mode_read(myMaster.worker_to_master);
+
 
     // boucle infinie :
     while (true){
         
-        printf("\nJ'attends\n");
+        printf("\nWelcome in the Waiting Room ...\n");
         
         val_test++;
         // - ouverture des tubes (cf. rq client.c)
@@ -107,53 +115,68 @@ void loop(master_data myMaster)
 
         // - attente d'un ordre du client (via le tube nommé)
 
-        ret = read(client_master, &commande, sizeof(int));
+        ret = read(client_master, &command, sizeof(int));
         myassert(ret == sizeof(int), "lecture compromise");
        
-        printf("\nordre reçu est : %d \n", commande);
+        printf("\nordre reçu est : %d \n", command);
        
         //===============================================================================================
         // - si ORDER_STOP
         
-        if(commande == -1){
+        if(command == ORDER_STOP){
             printf("\n STOP\n");
 
             ret = write(master_client, &r, sizeof(int)); //r = 1 pour true 
             myassert(ret == sizeof(int), "écriture compromise");
-        }else {
-    
-            printf("\nReponse : %d\n", howmany);
+            //TODO faire la gestion de commande pour fermer les workers
+        }else if(command == ORDER_COMPUTE_PRIME) {
+            //on récupère la valeur à tester 
+            int nb_test,result;
+            ret = read(client_master, &nb_test, sizeof(int));
+            myassert(ret != -1, "Lecture de la valeur à tester compromise");
 
+            //on envoie cette valeur au(x) worker(s) 
+            im_Writing(master_com, nb_test);
 
-            printf("\nECRITURE DE LA REPONSE\n");
-            ret = write(master_client, &howmany, sizeof(int));
-            myassert(ret == sizeof(int), "ecriture compromise");
-        
-        //===============================================================================================
-        // - si ORDER_COMPUTE_PRIME
-            // récupérer la réponse
-            /*
-            master_to_worker(envoi, nb_test);
-            int retour = worker_to_master(resp);    
-            //la transmettre au client
-            ret = write(master_client, &retour, sizeof(int));
-            myassert(ret == sizeof(int), "ecriture compromise");
-            */        
-        }
+            //attente de la réponse des workers
+            result = im_Reading(worker_com);
+            //une fois la réponse obtenue 1 ou -1 on l'a transmet au client 
+            ret = write(master_client, &result, sizeof(int));
+            myassert(ret != -1, "Ecriture du résultat au client compromise");
+            
+            
 
-        //===============================================================================================
-        // - si ORDER_HIGHEST_PRIME
-        //       . transmettre la réponse au client
+            //vérification du plus haut nombre premier calculé
+            //pour mettre à jour les données du master
+            if(result == IS_PRIME){
+                //incrémentation pour mettre à jour le nombre de premier calculé
+                myMaster.howmany_prime++;
 
+                if(myMaster.highest_prime < nb_test){
+                    myMaster.highest_prime = nb_test;
+                }
+            }
+
+                }else if(command == ORDER_HOW_MANY_PRIME) {
+                        //on envoie la donnée howmany_prime stockée dans master (structure)
+                        ret = write(master_client, &myMaster.howmany_prime, sizeof(int));
+                        myassert(ret == sizeof(int), "ecriture compromise");
+
+                    }else if(command == ORDER_HIGHEST_PRIME) {
+                        //on envoie la donnée highest_prime stockée dans master
+                        ret = write(master_client, &myMaster.highest_prime, sizeof(int));
+                        myassert(ret == sizeof(int), "ecriture compromise");
+                    }
+                    
         sleep(3); //evite le pb de priorité avec le client 
         
         // - fermer les tubes nommés
-        printf("\n FERMETURE DES TUBES MASTER VERS CLIENT ET INVERSE\n");
+        printf("\n Fermeture des communications\n");
         close(master_client);
         close(client_master);
 
-        if(commande == -1){
-                printf("\n LE MASTER VA BREAK\n "); 
+        if(command == -1){
+                printf("\n Le master va se fermer ...\n "); 
                 break;
         }
     }
