@@ -41,7 +41,7 @@ void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
 }
 
 //Fonction qui lit le résultat venant soit de l'un des worker ou du master
-int tube_read(int m_to_w){ //pipe via la structure de worker 
+int im_Reading(int m_to_w){ //pipe via la structure de worker 
 
     int nb_test;
     int m_w;
@@ -63,7 +63,7 @@ int test_fonction(int test[2], int val){
 
 
 //Fonction qui transmet soit le nb à tester au worker suivant, soit le résultat au master
-void tube_write(int tube_write, int nb_prime){     //pipe et nb premier via struct worker
+void im_Writing(int tube_write, int nb_prime){     //pipe et nb premier via struct worker
 
     int ret = write(tube_write, &nb_prime, sizeof(int));
     myassert(ret == sizeof(int),"probleme ériture prime au work suiv");
@@ -77,7 +77,7 @@ int mode_read(int read_pipe[2]){
 
     return read_pipe[0];
 }
-//de même pour le tue anonyme d'écriture
+//Inversement pour le tube anonyme d'écriture
 int mode_write(int write_pipe[2]){
 
     int is_write = close(write_pipe[0]);

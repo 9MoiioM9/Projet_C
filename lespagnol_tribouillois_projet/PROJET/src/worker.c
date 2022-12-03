@@ -77,52 +77,60 @@ void loop(worker_data myworker)
 {
     // boucle infinie :
     //    attendre l'arrivée d'un nombre à tester
-    int value;
-    int rep;
-    int W_N[2];
-    //int M_W[2];
-    int W_M[2];
-    //int P_W[2];
+    int myValue, ret;   //myValue pour le nb envoyer par le master
+                        //ret pour vérifier le bon fonctionnement de certaine création
 
     while (true)
     {
-        value = tube_read(myworker.worker_prev);
+        myValue = tube_read(myworker.worker_prev);
         
 
     //    si ordre d'arrêt
     //       si il y a un worker suivant, transmettre l'ordre et attendre sa fin
     //       sortir de la boucle
-        if(value == STOP_ORDER)
+        if(myValue == STOP_ORDER)
         {
             if(myworker.worker_next != NO_NEXT) //verif d'un worker suivant faire par rapport à la struct
             {                                   //worker_data.worker_next != NO_NEXT
-                myworker.worker_next = test_fonction(W_N, value);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
-                close(W_N[1]);                 //close(worker_data.worker_next[1]);
-            }else myworker.worker_master = test_fonction(W_N, 1); 
+                im_Writing(myworker.worker_next, myValue);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
+                /*
+                system d'attente c le premier worker qui se fermera en dernier !
+                */
+            }else im_Writing(myworker.worker_master, 1); 
 
-            close(M_W[0]); //?      
+            //si le worker n'a pas de suivant alors on sort de la boucle 
+            //pour pouvoir supprimer ce dernier !  
             break;
 
         }else {
-            if(value == myworker.nb_prime)      //si valeur = nb du worker alors nb premier
+            if(myValue == myworker.nb_prime)      //si valeur = nb du worker alors nb premier
             {
-                myworker.worker_master = worker_master(W_M, 1); //envoie 1 pour true
-            }else if(value % myworker.nb_prime == 0){     //modulo par rapport au num du worker
-                    myworker.worker_master = worker_master(W_M, -1);    //envoie -1 pour false
+                im_Writing(myworker.worker_master, 1); //envoie 1 pour true
+            }else if(myValue % myworker.nb_prime == 0){     //modulo par rapport au num du worker
+                    im_Writing(myworker.worker_master, -1);    //envoie -1 pour false
                 }else if(myworker.worker_next != NO_NEXT){
-                        myworker.worker_next = worker_next(W_N, value);
+                        im_Writing(myworker.worker_next, myValue);
                     }else{
-                        //créer le worker suiv
-                        
-                        fork();
-                        rep = worker_next(W_N, value);
+                        //création d'un nouveau pipe pour la communication avec le nouveau worker
+                        int new_pipe_for_worker[2];
+                        //juste pour vérifier la création du pipe, on sait jamais 
+                        ret = pipe(new_pipe_for_worker); 
+                        myassert(ret != -1, "creation du nouveau pipe compromise");
+
+                        //même fonctionnement que dans master.c 
+                        pid_t ret_fork = fork();
+                        myassert(ret_fork != -1, "nouveau fork mal construit");
+                        if(ret_fork == 0){ //on accède au fils = 0
+                            int new_read_for_new_worker = mode_read(new_pipe_for_worker); 
+                            //création du worker suivant 
+                            worker_creation(myValue, myworker.worker_master, new_read_for_new_worker); 
+                        }
+                        //changement au niveau du tube worker_next
+                        //création d'une nouvelle valeur pour pas créer bug avec le fils
+                        int new_next_worker = mode_write(new_pipe_for_worker);
+                        myworker.worker_next = new_next_worker;
                     }
         }
-    //    sinon c'est un nombre à tester, 4 possibilités :
-    //           - le nombre est premier
-    //           - le nombre n'est pas premier
-    //           - s'il y a un worker suivant lui transmettre le nombre
-    //           - s'il n'y a pas de worker suivant, le créer
     }
 }
 
@@ -136,18 +144,11 @@ int main(int argc, char * argv[])
 
     parseArgs(argc, argv, &myworker);     
 
-    
-    
-    // Si on est créé c'est qu'on est un nombre premier
-    // Envoyer au master un message positif pour dire
-    // que le nombre testé est bien premier
-
-    //envoie de son numero au master dès sa création
-    tube_write(myworker.worker_master, myworker.nb_prime);
+    //On envoie 1 au master dès sa création pour confirmation d'un nombre premier
+    //sachant qu'un worker est créer alors c'est forcément un nombre premier !
+    tube_write(myworker.worker_master, 1);
 
     loop(myworker);
-
-    // libérer les ressources : fermeture des files descriptors par exemple
 
     //fermeture des workers 
     closeWorker(myworker.worker_prev, myworker.worker_next, myworker.worker_master);

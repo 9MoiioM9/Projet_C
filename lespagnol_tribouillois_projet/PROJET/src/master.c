@@ -84,7 +84,7 @@ bool worker_to_master(int rep[2])
  ************************************************************************/
 void loop(master_data myMaster)
 {
-    int commande, nb_test, sc, ret, master_client, client_master;
+    int commande, nb_test, ret, master_client, client_master;
     int r = 1;
     int howmany = 5;
     int val_test = 0;
@@ -207,7 +207,7 @@ int main(int argc, char * argv[])
         worker_creation(prime_origine, worker_write, worker_read);
     }
 
-    
+
 
     // boucle infinie
     loop(myMaster);

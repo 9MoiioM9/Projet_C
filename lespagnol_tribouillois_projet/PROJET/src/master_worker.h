@@ -15,8 +15,8 @@
 void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker);
 
 //gestion de lecture / écriture entre le master et les workers
-void tube_write(int tube_write, int nb_prime);
-int tube_read(int m_to_w);
+void im_Writing(int tube_write, int nb_prime);
+int im_Reading(int m_to_w);
 
 int test_fonction(int test[2], int val);
 
