@@ -23,7 +23,7 @@
 
 // on peut ici définir une structure stockant tout ce dont le worker
 // a besoin : le nombre premier dont il a la charge, ...
-struct worker
+typedef struct worker
 {
     /* data */
     int nb_prime;           //nb premier transmi pour le calcul
@@ -48,78 +48,37 @@ static void usage(const char *exeName, const char *message)
     exit(EXIT_FAILURE);
 }
 
-static void parseArgs(int argc, char * argv[] /*, structure à remplir*/)
+static void parseArgs(int argc, char * argv[] , worker_data *myworker/*, structure à remplir*/)
 {
     if (argc != 4)
         usage(argv[0], "Nombre d'arguments incorrect");
 
     // remplir la structure
-}
+    //passe 4 arg -> [1]prime, [2]val_pipe master, [3]val_pipe entre worker
+    //récupération des arguments avec la fonction atoi(..); transforme chaine de char en int
+    
+    int nb = atoi(argv[1]);                     //nb premier à tester
+    myworker->nb_prime = nb;
 
-int master_worker(int envoi[2])
-{
-    close(envoi[1]);
-    int ord;
-    int m_w;
+    int val_pipe_master = atoi(argv[2]);        //pipe pour parler au master
+    myworker->worker_master = val_pipe_master;
 
-    m_w = read(envoi[0], &ord, sizeof(int));
-    myassert(ord == sizeof(int),"pobleme de lecture d'un ordre");
+    int val_pipe_worker = atoi(argv[3]);        //pipe pour communiquer (ici lecture) 
+    myworker->worker_prev = val_pipe_worker;    //avec le worker précédent 
 
-    close(envoi[0]);
-
-    return ord;
-
-    exit(EXIT_FAILURE);
-}
-
-int woker_master(int envoi[2], int nbr)
-{
-    close(envoi[0]);
-
-    int ret = write(envoi[1], &nbr, sizeof(int));
-    myassert(ret == sizeof(int),"probleme du retour du worker");
-
-    return envoi[1];
-
-}
-
-int worker_next(int envoi[2], int nbr)
-{
-    close(envoi[0]);
-
-    int ret = write(envoi[1], &nbr, sizeof(int));
-    myassert(ret == sizeof(int),"probleme transmission ordre work suiv");
-
-    return envoi[1];
-}
-
-int prev_worker(int envoi[2])
-{
-    close(envoi[1]);
-    int nbr;
-    int p_w;
-
-    p_w = read(envoi[0], &nbr, sizeof(int));
-    myassert(nbr == sizeof(int),"pobleme transmission nb test ");
-
-    close(envoi[0]);
-
-    return nbr;
+    myworker->worker_next = NO_NEXT ;           //initialisation à NO_NEXT car pas de suivant atm
 }
 
 /************************************************************************
  * Boucle principale de traitement
  ************************************************************************/
 
-void loop(/* paramètres */)     //mettre worker_data en paramètre
+void loop(worker_data myworker)     //mettre worker_data en paramètre
 {
     // boucle infinie :
     //    attendre l'arrivée d'un nombre à tester
-    int ord;
+    int value;
     int rep;
-    int nbr_test;
-    int ret = 1; // retour d'un ordre au master
-    int next = -1;  //faire par rapport à la constante NO_NEXT
     int W_N[2];
     int M_W[2];
     int W_M[2];
@@ -127,46 +86,45 @@ void loop(/* paramètres */)     //mettre worker_data en paramètre
 
     while (true)
     {
-        ord = master_worker;
+        value = master_worker;
         
 
     //    si ordre d'arrêt
     //       si il y a un worker suivant, transmettre l'ordre et attendre sa fin
     //       sortir de la boucle
-        if(ord == -1)
+        if(value == STOP_ORDER)
         {
-            if(next != -1) //verif d'un worker suivant faire par rapport à la struct
-            {               //worker_data.worker_next != NO_NEXT
-                next = worker_next(W_N, ord);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
+            if(myworker.worker_next != NO_NEXT) //verif d'un worker suivant faire par rapport à la struct
+            {                                   //worker_data.worker_next != NO_NEXT
+                myworker.worker_next = worker_next(W_N, value);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
                 close(W_N[1]);                 //close(worker_data.worker_next[1]);
-            }else rep = woker_master(W_M, ret); //pareil
+            }else myworker.worker_master = worker_master(W_M, 1); 
 
-            close(M_W[0]);      //close(worker_data.worker_prev); je suppose 
+            close(M_W[0]); //?      
             break;
 
+        }else {
+            if(value == myworker.nb_prime)      //si valeur = nb du worker alors nb premier
+            {
+                myworker.worker_master = worker_master(W_M, 1); //envoie 1 pour true
+            }else if(value % myworker.nb_prime == 0){     //modulo par rapport au num du worker
+                    myworker.worker_master = worker_master(W_M, -1);    //envoie -1 pour false
+                }else if(myworker.worker_next != NO_NEXT){
+                        myworker.worker_next = worker_next(W_N, value);
+                    }else{
+                        //créer le worker suiv
+                        
+                        fork();
+                        rep = worker_next(W_N, value);
+                    }
+            
+                
         }
     //    sinon c'est un nombre à tester, 4 possibilités :
     //           - le nombre est premier
     //           - le nombre n'est pas premier
     //           - s'il y a un worker suivant lui transmettre le nombre
     //           - s'il n'y a pas de worker suivant, le créer
-
-        if(ord == 1)
-        {
-            if(nbr_test == moi)
-            {
-                rep = woker_master(W_M, 1);
-            } 
-            else if(nbr_test mod moi == 0){
-                rep = woker_master(W_M, -1);
-            }
-                else if(/* worker suiv déjà créé*/){
-                    rep = worker_next(W_N, nbr_test);
-                }else{
-                    //créer le worker suiv
-                    rep = worker_next(W_N, nbr_test);
-                }
-        }
     }
 }
 
@@ -176,7 +134,9 @@ void loop(/* paramètres */)     //mettre worker_data en paramètre
 
 int main(int argc, char * argv[])
 {
-    parseArgs(argc, argv /*, structure à remplir*/);        //struct worker_data
+    worker_data myworker;
+
+    parseArgs(argc, argv, &myworker);        //struct worker_data
 
     
     
@@ -184,9 +144,25 @@ int main(int argc, char * argv[])
     // Envoyer au master un message positif pour dire
     // que le nombre testé est bien premier
 
-    loop(/* paramètres */);         //mettre worker_data en paramètre
+    loop(myworker);         //mettre worker_data en paramètre
 
     // libérer les ressources : fermeture des files descriptors par exemple
+
+    //fermeture des workers 
+    int close_worker;
+    close_worker = close(myworker.worker_prev);
+
+    //on vérifie qu'il existe un suivant avant
+    if (myworker.worker_next != NO_NEXT){
+        close_worker = close(myworker.worker_next);
+        myassert(close_worker != -1, "le worker_next ne sais pas close");
+    }
+
+    //une fois que tous les workers sont bien fermés 
+    //on fini enfin par le pipe entre master/worker
+    close_worker = close(myworker.worker_master);
+    myassert(close_worker != -1, "Le pipe entre master/worker ne sais pas close");
+
 
     return EXIT_SUCCESS;
 }

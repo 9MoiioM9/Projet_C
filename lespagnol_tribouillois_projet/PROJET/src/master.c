@@ -30,7 +30,14 @@ extern int errno ;
 
 // on peut ici définir une structure stockant tout ce dont le master
 // a besoin
+typedef struct master{
 
+    int master_to_worker[2];    //création des tubes anonymes de communication 
+    int worker_to_master[2];    //entre le master et les workers
+    int highest_prime;          //nb premier le plus élevé à mettre à jour dès que besoin 
+    int howmany_prime;          //nb de calcul de nb premier (incrémenté à chaque fois) 
+
+}master_data;
 
 /************************************************************************
  * Usage et analyse des arguments passés en ligne de commande
@@ -75,20 +82,12 @@ bool worker_to_master(int rep[2])
 /************************************************************************
  * boucle principale de communication avec le client
  ************************************************************************/
-void loop(/* paramètres */)
+void loop(master_data myMaster)
 {
     int commande, nb_test, sc, ret, master_client, client_master;
     int r = 1;
     int howmany = 5;
     int val_test = 0;
-
-    int errnum;
-    // int max = 0;
-    // int result;
-    // if(max < result)
-    // {
-    //     max = result;
-    // }
 
     // boucle infinie :
     while (true){
@@ -105,10 +104,7 @@ void loop(/* paramètres */)
 
         printf("\nOrdre numero : %d\n", val_test);
 
-        int envoi[2];
-        int resp[2];
-        
-       
+
         // - attente d'un ordre du client (via le tube nommé)
 
         ret = read(client_master, &commande, sizeof(int));
@@ -123,7 +119,7 @@ void loop(/* paramètres */)
             printf("\n STOP\n");
 
             ret = write(master_client, &r, sizeof(int)); //r = 1 pour true 
-            myassert(ret == sizeof(int), "lecture compromise");
+            myassert(ret == sizeof(int), "écriture compromise");
         }else {
     
             printf("\nReponse : %d\n", howmany);
@@ -135,22 +131,14 @@ void loop(/* paramètres */)
         
         //===============================================================================================
         // - si ORDER_COMPUTE_PRIME
-            if(commande == 1)
-            {
-                int retFork = fork();
-                if(retFork == 0)
-                {
-                    //exec à faire
-                }
-                myassert(retFork != -1, "problème au niveau du fork pour les workers");
-
-                master_to_worker(envoi, nb_test);
-                // récupérer la réponse
-                int retour = worker_to_master(resp);
-                //la transmettre au client
-                ret = write(master_client, &retour, sizeof(int));
-                myassert(ret == sizeof(int), "ecriture compromise");
-            }
+            // récupérer la réponse
+            /*
+            master_to_worker(envoi, nb_test);
+            int retour = worker_to_master(resp);    
+            //la transmettre au client
+            ret = write(master_client, &retour, sizeof(int));
+            myassert(ret == sizeof(int), "ecriture compromise");
+            */        
         }
 
         //===============================================================================================
@@ -164,16 +152,11 @@ void loop(/* paramètres */)
         close(master_client);
         close(client_master);
 
-        // - attendre ordre du client avant de continuer (sémaphore : précédence)
-        // - revenir en début de boucle
-
         if(commande == -1){
-            printf("\n LE MASTER VA BREAK\n "); 
-            break;
+                printf("\n LE MASTER VA BREAK\n "); 
+                break;
         }
-        
     }
-
 }
 
 /************************************************************************
@@ -185,21 +168,24 @@ int main(int argc, char * argv[])
      if (argc != 1)
         usage(argv[0], NULL);
 
+    master_data myMaster;
+
+    myMaster.highest_prime = INIT_VALUE;
+    myMaster.howmany_prime = INIT_VALUE;
+
     // - création des sémaphores
 
     int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
     
-    struct sembuf operation = {0, +1 , 0};
-
-    int sema_ope = semop(sema_precedence, &operation, 1);
-    myassert(sema_ope != -1 , "\nOpération invalide\n");
+    int init_sema = semctl(sema_precedence, 0, SETVAL, 1);
+    myassert(init_sema != -1, "Le sémaphore ne s'est pas correctement initialisé");
 
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
 
-    sema_ope = semop(sema_mutex, &operation, 1);
-    myassert(sema_ope != -1 , "\nOpération invalide\n");
+    init_sema = semctl(sema_mutex, 0, SETVAL, 1);
+    myassert(init_sema != -1 , "Le semaphore s'est mal initialisé");
 
     // - création des tubes nommés
 
@@ -209,10 +195,18 @@ int main(int argc, char * argv[])
     myassert(tube_cm != 1, "problème au niveau du tube client vers master");
     
     // - création du premier worker
+    int prime_origine = 2;
 
+    pid_t ret = fork();
+    myassert(ret != -1, "problème lors du premier fork");
+
+    int master_write = mode_write(myMaster.master_to_worker);
+    int master_read = mode_read(myMaster.worker_to_master);
+
+    worker_creation(prime_origine, master_read, master_write);
 
     // boucle infinie
-    loop();
+    loop(myMaster);
 
     // destruction des tubes nommés, des sémaphores, ...
     

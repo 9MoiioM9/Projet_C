@@ -25,6 +25,7 @@
 #define PIPE_CLIENT_TO_MASTER   "client_master" //tube nommé de client vers client
 
 //ORDER_COMPUTE_PRIME
+#define INIT_VALUE  0
 #define NO_PRIME    0   //si le nombre est pas premier alors 0
 #define IS_PRIME    1   //si le nombre est premier alors 1
 
