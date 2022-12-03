@@ -224,6 +224,7 @@ int main(int argc, char * argv[])
 
     if(ret == 0){
         int worker_write = mode_write(myMaster.master_to_worker);
+        //PROBLEME ICI MODE READ !
         int worker_read = mode_read(myMaster.worker_to_master);
 
         worker_creation(prime_origine, worker_write, worker_read);
