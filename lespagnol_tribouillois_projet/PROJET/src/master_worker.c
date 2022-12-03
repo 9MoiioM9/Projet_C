@@ -52,16 +52,6 @@ int im_Reading(int m_to_w){ //pipe via la structure de worker
     return nb_test;
 }
 
-int test_fonction(int test[2], int val){
-    close(test[0]);
-
-    int ret = write(test[1], &val, sizeof(int));
-    myassert(ret != -1, "probleme de transmission");
-
-    return test[1];
-}
-
-
 //Fonction qui transmet soit le nb à tester au worker suivant, soit le résultat au master
 void im_Writing(int tube_write, int nb_prime){     //pipe et nb premier via struct worker
 

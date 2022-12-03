@@ -83,12 +83,9 @@ void loop(worker_data myworker)
 
     while (true)
     {
+        //récupération de la valeur à tester
         myValue = tube_read(myworker.worker_prev);
         
-
-    //    si ordre d'arrêt
-    //       si il y a un worker suivant, transmettre l'ordre et attendre sa fin
-    //       sortir de la boucle
         if(myValue == STOP_ORDER)
         {
             if(myworker.worker_next != NO_NEXT) //verif d'un worker suivant faire par rapport à la struct

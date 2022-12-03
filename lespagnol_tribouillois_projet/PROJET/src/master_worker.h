@@ -18,8 +18,6 @@ void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker);
 void im_Writing(int tube_write, int nb_prime);
 int im_Reading(int m_to_w);
 
-int test_fonction(int test[2], int val);
-
 //gestion des ouvertures écriture/lecture des pipes 
 int mode_write(int write_pipe[2]);
 int mode_read(int read_pipe[2]);
