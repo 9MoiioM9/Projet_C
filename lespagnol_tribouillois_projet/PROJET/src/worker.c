@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <fcntl.h>
+//#include <wait.h>
 
 #include "myassert.h"
 
@@ -95,6 +96,7 @@ void loop(worker_data myworker)
                 im_Writing(myworker.worker_next, myValue);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
                 /*
                 system d'attente c le premier worker qui se fermera en dernier !
+                //wait(NULL);
                 */
             }else im_Writing(myworker.worker_master, 1); 
 
