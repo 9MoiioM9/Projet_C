@@ -108,8 +108,6 @@ void loop(master_data myMaster)
         //récupération de l'ordre du client afin de différencier les actions 
         command = lecture_nb(client_master);
 
-        printf("\nOrdre reçu est : %d \n", command);
-       
         if(command == ORDER_STOP){
             printf("\n STOP\n");
 
@@ -247,8 +245,9 @@ int main(int argc, char * argv[])
     //Gestion des lectures/écritures entre master/worker
     myMaster.ecriture = mode_write(myMaster.master_to_worker);
     myMaster.lecture = mode_read(myMaster.worker_to_master);
-
-    //TEST
+    
+    
+    //TEST obligatoire sinon bloquage sur 1 ??? 
     im_Writing(myMaster.ecriture, prime_origine);
 
     int test = im_Reading(myMaster.lecture);
