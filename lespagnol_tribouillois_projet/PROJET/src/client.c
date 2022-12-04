@@ -88,7 +88,7 @@ static int parseArgs(int argc, char * argv[], int *number)
  * Fonction principale
  ************************************************************************/
 
-
+//fonction pour afficher la réponse du master selon le nb obtenu
 void ReponseMaster(int order, int reponse)
 {
     switch(order)
@@ -130,6 +130,7 @@ int main(int argc, char * argv[])
     //Gestion de ORDER_COMPUTE_PRIME_LOCAL
     
     //=======================================================================
+    //entrée en section critique pour faire sa requête au master
     sc = entree_SC(54);
     myassert(sc != -1, "pb sema");
 
@@ -158,13 +159,12 @@ int main(int argc, char * argv[])
 
         ReponseMaster(order, reponse);
 
-        //sleep(3);
-
         close(master_client);
         close(client_master);
     }
 
-    //    - sortir de la section critique
+    //Une fois la réponse obtenue via le master on libère la ressource 
+    //Pour sortir de la section critique afin de laisser la place aux autres clients 
     sc = sortie_SC(54);
 
     return EXIT_SUCCESS;

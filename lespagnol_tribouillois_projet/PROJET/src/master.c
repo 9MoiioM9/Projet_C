@@ -34,8 +34,8 @@ typedef struct master{
     int worker_to_master[2];    //entre le master et les workers
     int highest_prime;          //nb premier le plus élevé à mettre à jour dès que besoin 
     int howmany_prime;          //nb de calcul de nb premier (incrémenté à chaque fois) 
-    int lecture;
-    int ecriture;
+    int lecture;                //lecture des msg plus simple si dans la structure et moins long
+    int ecriture;               //écriture des msg
 
 }master_data;
 
@@ -92,7 +92,8 @@ void loop(master_data myMaster)
         printf("\nWelcome in the Waiting Room ...\n");
         
         val_test++;
-        // - ouverture des tubes (cf. rq client.c)
+        //gestion d'ouverture des tubes nommés entre master/client
+        //en respectant l'ordre d'ouverture dans client et master
         sleep(2);
         master_client = open(PIPE_MASTER_TO_CLIENT, O_WRONLY);
         myassert(master_client != -1, "le tube master vers client ne s'est pas ouvert");
@@ -104,14 +105,11 @@ void loop(master_data myMaster)
 
 
         // - attente d'un ordre du client (via le tube nommé)
-
+        //récupération de l'ordre du client afin de différencier les actions 
         command = lecture_nb(client_master);
 
         printf("\nOrdre reçu est : %d \n", command);
        
-        //===============================================================================================
-        // - si ORDER_STOP
-        
         if(command == ORDER_STOP){
             printf("\n STOP\n");
 
@@ -128,8 +126,10 @@ void loop(master_data myMaster)
 
             printf("\n\nCalcule du nombre %d\n\n",nb_test);
 
+            //on compare avec le plus haut actuel pour savoir si on connais pas déjà la réponse
             if(nb_test > myMaster.highest_prime){
-                for(int i = myMaster.highest_prime+1; i< nb_test; i++){
+                for(int i = myMaster.highest_prime+1; i< nb_test; i++){ 
+                    //on envoie chaque valeur entre le max+1 et le nombre à tester
                     //on envoie cette valeur au(x) worker(s) une par une 
                     im_Writing(myMaster.ecriture, i);
 
@@ -147,14 +147,10 @@ void loop(master_data myMaster)
             im_Writing(myMaster.ecriture, nb_test);
             //on lit la réponse du worker 
             result = im_Reading(myMaster.lecture);
-
+            /*
             if(result > 1){
                 result = im_Reading(myMaster.lecture);
-            }
-            
-            
-            
-
+            }*/
             //vérification du plus haut nombre premier calculé
             //pour mettre à jour les données du master
             if(result == IS_PRIME){
@@ -200,6 +196,17 @@ void loop(master_data myMaster)
     }
 }
 
+master_data init_MyMaster(master_data mymaster){
+    int ret = pipe(mymaster.master_to_worker);
+    myassert(ret != 1, "init pipe master_worker compromise");
+    int ret1 = pipe(mymaster.worker_to_master);
+    myassert(ret1 != 1, "init pipe worker_master compromise");
+    
+    mymaster.highest_prime = INIT_VALUE;
+    mymaster.howmany_prime = INIT_VALUE;
+
+    return mymaster;
+}
 /************************************************************************
  * Fonction principale
  ************************************************************************/
@@ -209,28 +216,16 @@ int main(int argc, char * argv[])
      if (argc != 1)
         usage(argv[0], NULL);
 
-    master_data myMaster;
-
     //Initialisation des pipes de la struct master
-    int ret = pipe(myMaster.master_to_worker);
-    myassert(ret != 1, "init pipe master_worker compromise");
-    int ret1 = pipe(myMaster.worker_to_master);
-    myassert(ret1 != 1, "init pipe worker_master compromise");
-
-    myMaster.highest_prime = INIT_VALUE;
-    myMaster.howmany_prime = INIT_VALUE;
-    
+    master_data myMaster = init_MyMaster(myMaster);
 
     // - création de la sémaphore mutex pour les clients
-
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
-
     int init_sema = semctl(sema_mutex, 0, SETVAL, 1);
     myassert(init_sema != -1 , "Le semaphore s'est mal initialisé");
 
     // - création des tubes nommés
-
     int tube_mc = mkfifo(PIPE_MASTER_TO_CLIENT, 0644);
     myassert(tube_mc != -1, "problème au niveau du tube master vers client");
     int tube_cm = mkfifo(PIPE_CLIENT_TO_MASTER, 0644);
