@@ -88,9 +88,9 @@ void loop(worker_data myworker)
         
         if(myValue == STOP_ORDER)
         {
-            if(myworker.worker_next != NO_NEXT) //verif d'un worker suivant faire par rapport à la struct
-            {                                   //worker_data.worker_next != NO_NEXT
-                im_Writing(myworker.worker_next, myValue);   //changer avec la struct worker_data : worker_data.worker_next = worker_next(..)
+            if(myworker.worker_next != NO_NEXT) //verif d'un worker 
+            {                               
+                im_Writing(myworker.worker_next, myValue);   
                 /*
                 system d'attente c le premier worker qui se fermera en dernier !
                 //wait(NULL);

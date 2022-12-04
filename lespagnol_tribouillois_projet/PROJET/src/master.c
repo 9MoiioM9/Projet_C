@@ -82,7 +82,7 @@ bool worker_to_master(int rep[2])
  ************************************************************************/
 void loop(master_data myMaster)
 {
-    int command, ret, master_client, client_master;
+    int command,ret, master_client, client_master;
     int r = 1;
     int val_test = 0;
 
@@ -105,9 +105,8 @@ void loop(master_data myMaster)
 
         // - attente d'un ordre du client (via le tube nommé)
 
-        ret = read(client_master, &command, sizeof(int));  
-        myassert(ret != -1, "lecture compromise");
-       
+        command = lecture_nb(client_master);
+
         printf("\nOrdre reçu est : %d \n", command);
        
         //===============================================================================================
@@ -123,9 +122,9 @@ void loop(master_data myMaster)
         }else if(command == ORDER_COMPUTE_PRIME) {
             //on récupère la valeur à tester 
             printf("\nOrdre Compute Prime");
-            int nb_test,result;
-            ret = read(client_master, &nb_test, sizeof(int));
-            myassert(ret != -1, "Lecture de la valeur à tester compromise");
+            int result, nb_test;
+            nb_test = lecture_nb(client_master);
+            
 
             printf("\n\nCalcule du nombre %d\n\n",nb_test);
 
@@ -188,10 +187,9 @@ void loop(master_data myMaster)
                 myassert(ret == sizeof(int), "ecriture compromise");
             }
 
-        sleep(3); //evite le pb de priorité avec le client 
+        sleep(2); //evite le pb de priorité avec le client 
         
         // - fermer les tubes nommés
-        printf("\n Fermeture des communications\n");
         close(master_client);
         close(client_master);
 
@@ -223,18 +221,12 @@ int main(int argc, char * argv[])
     myMaster.howmany_prime = INIT_VALUE;
     
 
-    // - création des sémaphores
-
-    int sema_precedence = semget(CLE_MASTER, 1, IPC_CREAT | IPC_EXCL | 0641);
-    myassert(sema_precedence != -1, "le semaphore ne s'est pas creer");
-    
-    int init_sema = semctl(sema_precedence, 0, SETVAL, 1);
-    myassert(init_sema != -1, "Le sémaphore ne s'est pas correctement initialisé");
+    // - création de la sémaphore mutex pour les clients
 
     int sema_mutex = semget(CLE_CLIENT, 1, IPC_CREAT | IPC_EXCL | 0641);
     myassert(sema_mutex != -1, "le semaphore ne s'est pas creer");
 
-    init_sema = semctl(sema_mutex, 0, SETVAL, 1);
+    int init_sema = semctl(sema_mutex, 0, SETVAL, 1);
     myassert(init_sema != -1 , "Le semaphore s'est mal initialisé");
 
     // - création des tubes nommés
@@ -252,7 +244,6 @@ int main(int argc, char * argv[])
 
     if(ret_fork == 0){
         myMaster.ecriture = mode_write(myMaster.worker_to_master);
-        //PROBLEME ICI MODE READ !
         myMaster.lecture = mode_read(myMaster.master_to_worker);
 
         worker_creation(prime_origine, myMaster.ecriture, myMaster.lecture);
@@ -267,7 +258,7 @@ int main(int argc, char * argv[])
 
     int test = im_Reading(myMaster.lecture);
     if(test == IS_PRIME){
-        printf("worker reconnait %d comme nb premier",prime_origine);
+        printf("\nworker reconnait %d comme nb premier\n",prime_origine);
         myMaster.highest_prime = prime_origine;
         myMaster.howmany_prime++;
     }
@@ -279,10 +270,6 @@ int main(int argc, char * argv[])
     
     int delete_sema = semctl(sema_mutex, -1, IPC_RMID);
     myassert(delete_sema != -1, "la semaphore mutex s'est mal détruite");
-
-    delete_sema = semctl(sema_precedence, -1, IPC_RMID);
-    myassert(delete_sema != -1, "la semaphore précédence s'est mal détruite");
-
 
     tube_mc = unlink(PIPE_MASTER_TO_CLIENT);
     myassert(tube_mc != -1, "Le tube 1 ne s'est pas bien détruit");

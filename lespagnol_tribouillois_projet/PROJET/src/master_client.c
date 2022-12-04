@@ -54,6 +54,15 @@ int sortie_SC(int key)
     return sema_mutex;
 }
 
+int lecture_nb(int tube){
+
+    int val;
+    int ret = read(tube, &val,sizeof(int));
+    myassert(ret != -1, "probleme de lecture");
+
+    return val;
+}
+
 
 
 

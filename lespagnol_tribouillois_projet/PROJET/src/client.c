@@ -96,8 +96,8 @@ void ReponseMaster(int order, int reponse)
         case ORDER_COMPUTE_PRIME : 
             if(reponse == IS_PRIME)
             {
-                printf("Le nombre choisi est premier");
-            }else printf("le nombre choisi n'est pas premier");
+                printf("\nLe nombre choisi est premier\n");
+            }else printf("\nLe nombre choisi n'est pas premier\n");
         break;
 
         case ORDER_HIGHEST_PRIME : printf("\nLe nombre premier le plus grand calculé est %d\n",reponse);
@@ -109,8 +109,8 @@ void ReponseMaster(int order, int reponse)
         case ORDER_STOP : 
         if(reponse == 1)
         {
-            printf("Le master et ses workers se sont bien terminer");
-        }else printf("Le master et ses workers ne se sont pas terminer");
+            printf("\nLe master et ses workers se sont bien terminer\n");
+        }else printf("\nLe master et ses workers ne se sont pas terminer\n");
         break;
 
         default : printf("Ordre en attente");
@@ -125,11 +125,13 @@ int main(int argc, char * argv[])
     int order = parseArgs(argc, argv, &number);
     printf("verif de l'ordre : %d\n", order); // pour éviter le warning
     
-    int sc, master_client, client_master, reponse;
+    int sc, master_client, client_master;
 
     //Gestion de ORDER_COMPUTE_PRIME_LOCAL
     
     //=======================================================================
+    sc = entree_SC(54);
+    myassert(sc != -1, "pb sema");
 
     //Ouverture de la lecture de l'ordre et écriture de la réponse
     //=======================================================================    
@@ -140,22 +142,19 @@ int main(int argc, char * argv[])
 
         client_master = open(PIPE_CLIENT_TO_MASTER, O_WRONLY);
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
-
-        sc = sortie_SC(56);
-        myassert(sc != -1, "pb sema");
         
-        int tst = write(client_master, &order, sizeof(int));
-        myassert(tst == sizeof(int), "pb d'envoie d'ordre");
-    
-    //=======================================================================
-        sc = entree_SC(54); //sema_mutex blocant les autres clients
+        int ret = write(client_master, &order, sizeof(int));
+        myassert(ret != -1, "pb d'envoie d'ordre");
 
+        if(order == ORDER_COMPUTE_PRIME){
+            //si calcul d'un premier alors on lui transmet le nombre reçu par le user
+            ret = write(client_master, &number, sizeof(int));
+            myassert(ret != -1, "pb d'envoie d'ordre");
+        }
+    //=======================================================================
         sleep(2); //éviter le blocage de ressource au niveau de la section critique
 
-        sc = entree_SC(56); //prend la ressource pour lire réponse
-
-        tst = read(master_client, &reponse, sizeof(int));
-        myassert(tst == sizeof(int), "lecture compromise");
+        int reponse = lecture_nb(master_client);
 
         ReponseMaster(order, reponse);
 
@@ -166,20 +165,10 @@ int main(int argc, char * argv[])
     }
 
     //    - sortir de la section critique
-    if(order != -1){
-        sc = sortie_SC(56);
-        sc = sortie_SC(54); //dès que le client reçoit sa réponse il libère la ressource 
-                            //pour laisser l'accés à un autre client.
-    }
+    sc = sortie_SC(54);
+
     return EXIT_SUCCESS;
 }
-
-// order peut valoir 5 valeurs (cf. master_client.h) :
-    //      - ORDER_COMPUTE_PRIME_LOCAL     4
-    //      - ORDER_STOP                   -1
-    //      - ORDER_COMPUTE_PRIME           1
-    //      - ORDER_HOW_MANY_PRIME          2
-    //      - ORDER_HIGHEST_PRIME           3
 
     // si c'est ORDER_COMPUTE_PRIME_LOCAL
     //    alors c'est un code complètement à part multi-thread
@@ -196,11 +185,3 @@ int main(int argc, char * argv[])
     {
         //TODO code thread 
     }else { */
-
-//    - débloquer le master grâce à un second sémaphore (cf. ci-dessous)
-    
-    // Une fois que le master a envoyé la réponse au client, il se bloque
-    // sur un sémaphore ; le dernier point permet donc au master de continuer
-    //
-    // N'hésitez pas à faire des fonctions annexes ; si la fonction main
-    // ne dépassait pas une trentaine de lignes, ce serait bien.

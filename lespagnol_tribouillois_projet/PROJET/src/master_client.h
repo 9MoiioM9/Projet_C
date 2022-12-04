@@ -16,7 +16,6 @@
 
 
 //Gestion de nos constantes
-#define CLE_MASTER  56  //clé pour la sémaphore master/client
 #define CLE_CLIENT  54  //clé pour la gestion du mutex
 
 #define FICHIER "master_client.h" 
@@ -37,6 +36,8 @@
 int entree_SC();
 
 int sortie_SC();
+
+int lecture_nb(int tube);
 
 
 #endif
