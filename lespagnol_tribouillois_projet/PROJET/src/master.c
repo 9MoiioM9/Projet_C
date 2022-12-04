@@ -51,32 +51,6 @@ static void usage(const char *exeName, const char *message)
     exit(EXIT_FAILURE);
 }
 
-void master_to_worker(int envoi[2], int nbr)
-{
-    close(envoi[0]);
-    int ret;
-
-    ret = write(envoi[1], &nbr, sizeof(int));
-    myassert(ret == sizeof(int),"Ecriture comprosie");
-
-    close(envoi[1]);
-}
-
-bool worker_to_master(int rep[2])
-{
-
-    bool res;
-    close(rep[1]);
-    int ret;
-
-    ret = read(rep[0], &res, sizeof(bool));
-    myassert(ret == sizeof(bool), "Lecture compromise");
-
-    close(rep[0]);
-
-    return res;
-}
-
 /************************************************************************
  * boucle principale de communication avec le client
  ************************************************************************/
