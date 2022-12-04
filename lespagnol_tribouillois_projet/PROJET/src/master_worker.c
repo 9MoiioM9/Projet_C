@@ -9,17 +9,17 @@
 
 #include "master_worker.h"
 
-#include <unistd.h>
+#include <unistd.h> //pour execv
 
 // fonctions éventuelles internes au fichier
 void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
 
-    char *argv[4];  //pointeur pour l'exec
+    char *argv[5];  //pointeur pour l'exec
 
     //chaine pour mettre dans argv pour l'exec du nouveau worker
     char nb_prime[5];
-    char master_worker[5];
-    char worker_master[5];
+    char master_worker[9];
+    char worker_master[9];
 
     //remplissage des chaines avec valeurs reçues en paramètre
     sprintf(nb_prime, "%d",myPrime);
@@ -30,13 +30,15 @@ void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
     argv[0] = "worker";         //pour le nom dans le exec
     argv[1] = nb_prime;         //notre valeur pour le worker à sa creation
     argv[2] = worker_master;    //le tube suivant
-    argv[3] = master_worker;    //le tube précédent 
+    argv[3] = master_worker;    //le tube précédent
+    argv[4] = NULL; 
     //On garde l'ordre par rapport à la fonction parseArgs !
 
     //On peut enfin créer notre worker avec un exec
     execv(argv[0], argv);
     //Gestion d'erreur au cas ou si l'exec disfonctionne 
     //TODO erreur
+    perror("pb avec l'exec");
 }
 
 //Fonction qui lit le résultat venant soit de l'un des worker ou du master

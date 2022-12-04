@@ -10,7 +10,7 @@
 #include <sys/sem.h>
 #include <sys/stat.h>  //mkfifo 
 #include <string.h>
-#include <unistd.h>
+#include <unistd.h> //pour execv
 #include <math.h>
 #include <fcntl.h>
 
@@ -20,8 +20,6 @@
 #include "master_worker.h"
 
 #include "errno.h"
-
-extern int errno ;
 
 
 /************************************************************************
@@ -36,6 +34,8 @@ typedef struct master{
     int worker_to_master[2];    //entre le master et les workers
     int highest_prime;          //nb premier le plus élevé à mettre à jour dès que besoin 
     int howmany_prime;          //nb de calcul de nb premier (incrémenté à chaque fois) 
+    int lecture;
+    int ecriture;
 
 }master_data;
 
@@ -92,8 +92,8 @@ void loop(master_data myMaster)
     myassert(ret != -1,"création d'un pipe compromise");
 
     //Gestion des lectures/écritures entre master/worker
-    int master_com = mode_write(myMaster.master_to_worker);
-    int worker_com = mode_read(myMaster.worker_to_master);
+    myMaster.ecriture = mode_write(myMaster.master_to_worker);
+    myMaster.lecture = mode_read(myMaster.worker_to_master);
 
 
     // boucle infinie :
@@ -109,15 +109,15 @@ void loop(master_data myMaster)
         client_master = open(PIPE_CLIENT_TO_MASTER, O_RDONLY);
         myassert(client_master != -1, "le tube client vers master ne s'est pas ouvert");
 
-        printf("\nOrdre numero : %d\n", val_test);
+        printf("\nClient : %d\n", val_test);
 
 
         // - attente d'un ordre du client (via le tube nommé)
 
-        ret = read(client_master, &command, sizeof(int));
+        ret = read(client_master, &command, sizeof(int));  
         myassert(ret == sizeof(int), "lecture compromise");
        
-        printf("\nordre reçu est : %d \n", command);
+        printf("\nOrdre reçu est : %d \n", command);
        
         //===============================================================================================
         // - si ORDER_STOP
@@ -130,15 +130,18 @@ void loop(master_data myMaster)
             //TODO faire la gestion de commande pour fermer les workers
         }else if(command == ORDER_COMPUTE_PRIME) {
             //on récupère la valeur à tester 
+            printf("\nOrdre Compute Prime");
             int nb_test,result;
             ret = read(client_master, &nb_test, sizeof(int));
             myassert(ret != -1, "Lecture de la valeur à tester compromise");
 
+            printf("\n\nCalcule du nombre %d\n\n",nb_test);
+
             //on envoie cette valeur au(x) worker(s) 
-            im_Writing(master_com, nb_test);
+            im_Writing(myMaster.ecriture, nb_test);
 
             //attente de la réponse des workers
-            result = im_Reading(worker_com);
+            result = im_Reading(myMaster.lecture);
             //une fois la réponse obtenue 1 ou -1 on l'a transmet au client 
             ret = write(master_client, &result, sizeof(int));
             myassert(ret != -1, "Ecriture du résultat au client compromise");
@@ -156,16 +159,19 @@ void loop(master_data myMaster)
                 }
             }
 
-                }else if(command == ORDER_HOW_MANY_PRIME) {
-                        //on envoie la donnée howmany_prime stockée dans master (structure)
-                        ret = write(master_client, &myMaster.howmany_prime, sizeof(int));
-                        myassert(ret == sizeof(int), "ecriture compromise");
+        }else if(command == ORDER_HOW_MANY_PRIME) {
+                printf("\nOrdre HowMany Prime");
+                //on envoie la donnée howmany_prime stockée dans master (structure)
+                ret = write(master_client, &myMaster.howmany_prime, sizeof(int));
+                myassert(ret == sizeof(int), "ecriture compromise");
 
-                    }else if(command == ORDER_HIGHEST_PRIME) {
-                        //on envoie la donnée highest_prime stockée dans master
-                        ret = write(master_client, &myMaster.highest_prime, sizeof(int));
-                        myassert(ret == sizeof(int), "ecriture compromise");
-                    }
+            }else if(command == ORDER_HIGHEST_PRIME) {
+                printf("\nOrdre Highest Prime");
+
+                //on envoie la donnée highest_prime stockée dans master
+                ret = write(master_client, &myMaster.highest_prime, sizeof(int));
+                myassert(ret == sizeof(int), "ecriture compromise");
+            }
 
         sleep(3); //evite le pb de priorité avec le client 
         
@@ -192,8 +198,15 @@ int main(int argc, char * argv[])
 
     master_data myMaster;
 
+    //Initialisation des pipes de la struct master
+    int ret = pipe(myMaster.master_to_worker);
+    myassert(ret != 1, "pb pipe");
+    int ret1 = pipe(myMaster.worker_to_master);
+    myassert(ret1 != 1, "pb pipe");
+
     myMaster.highest_prime = INIT_VALUE;
     myMaster.howmany_prime = INIT_VALUE;
+    
 
     // - création des sémaphores
 
@@ -219,15 +232,17 @@ int main(int argc, char * argv[])
     // - création du premier worker
     int prime_origine = 2;
 
-    pid_t ret = fork();
-    myassert(ret != -1, "problème lors de la créatio du premier worker");
+    pid_t ret_fork = fork();
+    myassert(ret_fork != -1, "problème lors de la créatio du premier worker");
 
-    if(ret == 0){
-        int worker_write = mode_write(myMaster.master_to_worker);
+    if(ret_fork == 0){
+        myMaster.ecriture = mode_write(myMaster.worker_to_master);
         //PROBLEME ICI MODE READ !
-        int worker_read = mode_read(myMaster.worker_to_master);
+        myMaster.lecture = mode_read(myMaster.master_to_worker);
 
-        worker_creation(prime_origine, worker_write, worker_read);
+        worker_creation(prime_origine, myMaster.ecriture, myMaster.lecture);
+
+        printf("\nJe suis ici \n ");
     }
 
 

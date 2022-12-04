@@ -142,6 +142,7 @@ int main(int argc, char * argv[])
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
 
         sc = sortie_SC(56);
+        myassert(sc != -1, "pb sema");
         
         int tst = write(client_master, &order, sizeof(int));
         myassert(tst == sizeof(int), "pb d'envoie d'ordre");

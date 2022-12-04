@@ -84,7 +84,7 @@ void loop(worker_data myworker)
     while (true)
     {
         //récupération de la valeur à tester
-        myValue = tube_read(myworker.worker_prev);
+        myValue = im_Reading(myworker.worker_prev);
         
         if(myValue == STOP_ORDER)
         {
@@ -145,7 +145,9 @@ int main(int argc, char * argv[])
 
     //On envoie 1 au master dès sa création pour confirmation d'un nombre premier
     //sachant qu'un worker est créer alors c'est forcément un nombre premier !
-    tube_write(myworker.worker_master, 1);
+    im_Writing(myworker.worker_master, 1);
+
+    printf("\nJe suis le worker %d\n", myworker.nb_prime);
 
     loop(myworker);
 
