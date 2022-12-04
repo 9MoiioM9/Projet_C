@@ -36,9 +36,6 @@ void worker_creation(int myPrime, int worker_to_master, int myPrevious_Worker){
 
     //On peut enfin créer notre worker avec un exec
     execv(argv[0], argv);
-    //Gestion d'erreur au cas ou si l'exec disfonctionne 
-    //TODO erreur
-    perror("pb avec l'exec");
 }
 
 //Fonction qui lit le résultat venant soit de l'un des worker ou du master

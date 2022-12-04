@@ -85,16 +85,6 @@ void loop(master_data myMaster)
     int command, ret, master_client, client_master;
     int r = 1;
     int val_test = 0;
-    //petite vérification des pipe de notre struct master pour la communication avec worker
-    ret = pipe(myMaster.master_to_worker);
-    myassert(ret != -1,"création d'un pipe compromise");
-    ret = pipe(myMaster.worker_to_master);
-    myassert(ret != -1,"création d'un pipe compromise");
-
-    //Gestion des lectures/écritures entre master/worker
-    myMaster.ecriture = mode_write(myMaster.master_to_worker);
-    myMaster.lecture = mode_read(myMaster.worker_to_master);
-
 
     // boucle infinie :
     while (true){
@@ -103,6 +93,7 @@ void loop(master_data myMaster)
         
         val_test++;
         // - ouverture des tubes (cf. rq client.c)
+        sleep(2);
         master_client = open(PIPE_MASTER_TO_CLIENT, O_WRONLY);
         myassert(master_client != -1, "le tube master vers client ne s'est pas ouvert");
         
@@ -115,7 +106,7 @@ void loop(master_data myMaster)
         // - attente d'un ordre du client (via le tube nommé)
 
         ret = read(client_master, &command, sizeof(int));  
-        myassert(ret == sizeof(int), "lecture compromise");
+        myassert(ret != -1, "lecture compromise");
        
         printf("\nOrdre reçu est : %d \n", command);
        
@@ -126,8 +117,9 @@ void loop(master_data myMaster)
             printf("\n STOP\n");
 
             ret = write(master_client, &r, sizeof(int)); //r = 1 pour true 
-            myassert(ret == sizeof(int), "écriture compromise");
+            myassert(ret != -1, "écriture compromise");
             //TODO faire la gestion de commande pour fermer les workers
+
         }else if(command == ORDER_COMPUTE_PRIME) {
             //on récupère la valeur à tester 
             printf("\nOrdre Compute Prime");
@@ -137,26 +129,49 @@ void loop(master_data myMaster)
 
             printf("\n\nCalcule du nombre %d\n\n",nb_test);
 
-            //on envoie cette valeur au(x) worker(s) 
-            im_Writing(myMaster.ecriture, nb_test);
+            if(nb_test > myMaster.highest_prime){
+                for(int i = myMaster.highest_prime+1; i< nb_test; i++){
+                    //on envoie cette valeur au(x) worker(s) une par une 
+                    im_Writing(myMaster.ecriture, i);
 
-            //attente de la réponse des workers
+                    //attente de la réponse des workers
+                    result = im_Reading(myMaster.lecture);
+
+                    if(result == IS_PRIME){
+                        myMaster.highest_prime = result;
+                        myMaster.howmany_prime++;
+                    }
+                }
+            }
+            
+            //on envoie le nombre à tester au worker
+            im_Writing(myMaster.ecriture, nb_test);
+            //on lit la réponse du worker 
             result = im_Reading(myMaster.lecture);
-            //une fois la réponse obtenue 1 ou -1 on l'a transmet au client 
-            ret = write(master_client, &result, sizeof(int));
-            myassert(ret != -1, "Ecriture du résultat au client compromise");
+
+            if(result > 1){
+                result = im_Reading(myMaster.lecture);
+            }
+            
             
             
 
             //vérification du plus haut nombre premier calculé
             //pour mettre à jour les données du master
             if(result == IS_PRIME){
-                //incrémentation pour mettre à jour le nombre de premier calculé
-                myMaster.howmany_prime++;
-
+                //une fois la réponse obtenue 1 ou -1 on l'a transmet au client 
+                ret = write(master_client, &result, sizeof(int));
+                myassert(ret != -1, "Ecriture du résultat au client compromise");
+                
                 if(myMaster.highest_prime < nb_test){
                     myMaster.highest_prime = nb_test;
+                    //incrémentation pour mettre à jour le nombre de premier calculé
+
+                    myMaster.howmany_prime++;
                 }
+            }else if(result == NO_PRIME){
+                ret = write(master_client, &result, sizeof(int));
+                myassert(ret != -1, "Ecriture du résultat au client compromise");
             }
 
         }else if(command == ORDER_HOW_MANY_PRIME) {
@@ -200,9 +215,9 @@ int main(int argc, char * argv[])
 
     //Initialisation des pipes de la struct master
     int ret = pipe(myMaster.master_to_worker);
-    myassert(ret != 1, "pb pipe");
+    myassert(ret != 1, "init pipe master_worker compromise");
     int ret1 = pipe(myMaster.worker_to_master);
-    myassert(ret1 != 1, "pb pipe");
+    myassert(ret1 != 1, "init pipe worker_master compromise");
 
     myMaster.highest_prime = INIT_VALUE;
     myMaster.howmany_prime = INIT_VALUE;
@@ -241,11 +256,21 @@ int main(int argc, char * argv[])
         myMaster.lecture = mode_read(myMaster.master_to_worker);
 
         worker_creation(prime_origine, myMaster.ecriture, myMaster.lecture);
-
-        printf("\nJe suis ici \n ");
     }
 
+    //Gestion des lectures/écritures entre master/worker
+    myMaster.ecriture = mode_write(myMaster.master_to_worker);
+    myMaster.lecture = mode_read(myMaster.worker_to_master);
 
+    //TEST
+    im_Writing(myMaster.ecriture, prime_origine);
+
+    int test = im_Reading(myMaster.lecture);
+    if(test == IS_PRIME){
+        printf("worker reconnait %d comme nb premier",prime_origine);
+        myMaster.highest_prime = prime_origine;
+        myMaster.howmany_prime++;
+    }
 
     // boucle infinie
     loop(myMaster);

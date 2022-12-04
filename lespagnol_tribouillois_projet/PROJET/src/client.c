@@ -159,13 +159,10 @@ int main(int argc, char * argv[])
 
         ReponseMaster(order, reponse);
 
-        if(reponse == 1)
-        {
-            sleep(5);
+        //sleep(3);
 
-            close(master_client);
-            close(client_master);
-        }
+        close(master_client);
+        close(client_master);
     }
 
     //    - sortir de la section critique
@@ -174,9 +171,6 @@ int main(int argc, char * argv[])
         sc = sortie_SC(54); //dès que le client reçoit sa réponse il libère la ressource 
                             //pour laisser l'accés à un autre client.
     }
-
-
-
     return EXIT_SUCCESS;
 }
 
