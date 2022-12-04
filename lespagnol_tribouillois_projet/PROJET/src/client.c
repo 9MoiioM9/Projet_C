@@ -153,7 +153,7 @@ int main(int argc, char * argv[])
             myassert(ret != -1, "pb d'envoie d'ordre");
         }
     //=======================================================================
-        sleep(2); //éviter le blocage de ressource au niveau de la section critique
+     //éviter le blocage de ressource au niveau de la section critique
 
         int reponse = lecture_nb(master_client);
 
