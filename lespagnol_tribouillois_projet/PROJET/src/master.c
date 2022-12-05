@@ -152,6 +152,7 @@ void loop(master_data myMaster)
                 myassert(ret == sizeof(int), "ecriture compromise");
             }
         
+        sleep(2);
         // - fermer les tubes nommés
         close(master_client);
         close(client_master);
