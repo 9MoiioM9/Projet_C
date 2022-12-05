@@ -116,55 +116,56 @@ void ReponseMaster(int order, int reponse)
     }
 }
 
-typedef struct 
+typedef struct thread
 {
     int nbIsPrime, nbCase;
     bool prime;
-} DataThread;
+} thread_Data;
 
+//fonctionne pas avec "local"
 void * codeThread(void * arg)
 {
-    DataThread *data = (DataThread *) arg;
+    thread_Data *myThread = (thread_Data *) arg;
 
-    if(data ->nbIsPrime % data ->nbCase != 0)
+    
+    int nbCase = myThread->nbCase+2;
+    if(myThread->nbIsPrime % nbCase != 0)
     {
-        data->prime = true;
+        myThread->prime = true;
     }
     return NULL;
 }
 
+//Ne fonctionne pas avec l'ordre "local"
 void compute_prime_local(int number){
 
     int numb = (int) sqrt(number)- 1;
     pthread_t threadArray[numb];
-    DataThread dataThreads[numb];
+    thread_Data myThread[numb];
 
     for(int i = 0; i <= numb; i++)
     {
-        dataThreads[i].nbCase = i;
-        dataThreads[i].nbIsPrime = number;
-        dataThreads[i].prime = false;
+        myThread[i].nbCase = i;
+        myThread[i].nbIsPrime = number;
+        myThread[i].prime = false;
 
-        int th = pthread_create(&(threadArray[i]), NULL, codeThread, &dataThreads[i]);
-        myassert(th == 0, "probleme lors de la création d'un thread");
+        int th = pthread_create(&(threadArray[i]), NULL, codeThread, &myThread[i]);
+        myassert(th == 0, "problème lors de la création d'un thread\n");
     }
 
     for(int i = 0; i <= numb; i++)
     {
         int th = pthread_join(threadArray[i], NULL);
-         myassert(th == 0, "probleme lors de l'attente d'un thread");
+         myassert(th == 0, "problème lors de l'attente d'un thread\n");
     }
 
-    for(int i = 0; i <= numb; i++)
+    for(int i = 0; i < numb; i++)
     {   
-        if(dataThreads[i].prime == false)
+        if(myThread[i].prime == false)
         {
-            printf("le nombre %d n'est pas premier", number);
-        }
-        else printf("le nombre %d est premier", number);
+            printf("\nLe nombre %d n'est pas premier\n", number);
+        }else printf("\nLe nombre %d est premier\n", number);
     }
-
-
 }
 
 /************************************************************************
@@ -224,13 +225,4 @@ int main(int argc, char * argv[])
 
     return EXIT_SUCCESS;
 }
-
-    // si c'est ORDER_COMPUTE_PRIME_LOCAL
-    //    alors c'est un code complètement à part multi-thread
-    // sinon
-    //    - entrer en section critique :
-    //           . pour empêcher que 2 clients communiquent simultanément
-    //           . le mutex est déjà créé par le master
-    
-    //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
 

@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <fcntl.h>
-//#include <wait.h>
+#include <wait.h>
 
 #include "myassert.h"
 
@@ -77,7 +77,7 @@ static void parseArgs(int argc, char * argv[] , worker_data *myworker)
 void loop(worker_data myworker)
 {
     // boucle infinie :
-    //    attendre l'arrivée d'un nombre à tester
+    // attendre l'arrivée d'un nombre à tester
     int myValue, ret;   //myValue pour le nb envoyer par le master
                         //ret pour vérifier le bon fonctionnement de certaine création
 
@@ -91,10 +91,10 @@ void loop(worker_data myworker)
             if(myworker.worker_next != NO_NEXT) //verif d'un worker 
             {                               
                 im_Writing(myworker.worker_next, myValue);   
-                /*
-                system d'attente c le premier worker qui se fermera en dernier !
-                //wait(NULL);
-                */
+                
+                //system d'attente c le premier worker qui se fermera en dernier !
+                wait(NULL);
+                
             }else im_Writing(myworker.worker_master, 1); 
 
             //si le worker n'a pas de suivant alors on sort de la boucle 
@@ -153,7 +153,6 @@ int main(int argc, char * argv[])
 
     //fermeture des workers 
     closeWorker(myworker.worker_prev, myworker.worker_next, myworker.worker_master);
-
 
     return EXIT_SUCCESS;
 }

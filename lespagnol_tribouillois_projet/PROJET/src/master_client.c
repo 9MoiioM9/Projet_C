@@ -12,7 +12,6 @@
 #include <sys/sem.h>
 #include <string.h>
 #include <unistd.h>
-#include <math.h>
 #include <fcntl.h>
 
 #include "myassert.h"

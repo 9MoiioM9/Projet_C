@@ -119,10 +119,7 @@ void loop(master_data myMaster)
             im_Writing(myMaster.ecriture, nb_test);
             //on lit la réponse du worker 
             result = im_Reading(myMaster.lecture);
-            /*
-            if(result > 1){
-                result = im_Reading(myMaster.lecture);
-            }*/
+            
             //vérification du plus haut nombre premier calculé
             //pour mettre à jour les données du master
             if(result == IS_PRIME){
@@ -154,8 +151,6 @@ void loop(master_data myMaster)
                 ret = write(master_client, &myMaster.highest_prime, sizeof(int));
                 myassert(ret == sizeof(int), "ecriture compromise");
             }
-
-        sleep(2); //evite le pb de priorité avec le client 
         
         // - fermer les tubes nommés
         close(master_client);
