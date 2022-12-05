@@ -195,7 +195,7 @@ int main(int argc, char * argv[])
     if(order != 4){
     
         master_client = open(PIPE_MASTER_TO_CLIENT, O_RDONLY);
-        myassert(master_client != -1, "ouverture en mode lecture impossible");
+        myassert(master_client != -1, "ouverture en mode le cture impossible");
 
         client_master = open(PIPE_CLIENT_TO_MASTER, O_WRONLY);
         myassert(client_master != -1, "ouverture en mode ecriture impossible");
