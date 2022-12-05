@@ -39,5 +39,8 @@ int sortie_SC();
 
 int lecture_nb(int tube);
 
+void * codeThread(void * arg);
+void compute_prime_local(int number);
+
 
 #endif

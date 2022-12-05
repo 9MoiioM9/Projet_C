@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <math.h>
 #include <fcntl.h>
+#include <pthread.h>
+#include <math.h>
 
 #include "myassert.h"
 
@@ -84,10 +86,6 @@ static int parseArgs(int argc, char * argv[], int *number)
 }
 
 
-/************************************************************************
- * Fonction principale
- ************************************************************************/
-
 //fonction pour afficher la réponse du master selon le nb obtenu
 void ReponseMaster(int order, int reponse)
 {
@@ -118,6 +116,61 @@ void ReponseMaster(int order, int reponse)
     }
 }
 
+typedef struct 
+{
+    int nbIsPrime, nbCase;
+    bool prime;
+} DataThread;
+
+void * codeThread(void * arg)
+{
+    DataThread *data = (DataThread *) arg;
+
+    if(data ->nbIsPrime % data ->nbCase != 0)
+    {
+        data->prime = true;
+    }
+    return NULL;
+}
+
+void compute_prime_local(int number){
+
+    int numb = (int) sqrt(number)- 1;
+    pthread_t threadArray[numb];
+    DataThread dataThreads[numb];
+
+    for(int i = 0; i <= numb; i++)
+    {
+        dataThreads[i].nbCase = i;
+        dataThreads[i].nbIsPrime = number;
+        dataThreads[i].prime = false;
+
+        int th = pthread_create(&(threadArray[i]), NULL, codeThread, &dataThreads[i]);
+        myassert(th == 0, "probleme lors de la création d'un thread");
+    }
+
+    for(int i = 0; i <= numb; i++)
+    {
+        int th = pthread_join(threadArray[i], NULL);
+         myassert(th == 0, "probleme lors de l'attente d'un thread");
+    }
+
+    for(int i = 0; i <= numb; i++)
+    {   
+        if(dataThreads[i].prime == false)
+        {
+            printf("le nombre %d n'est pas premier", number);
+        }
+        else printf("le nombre %d est premier", number);
+    }
+
+
+}
+
+/************************************************************************
+ * Fonction principale
+ ************************************************************************/
+
 
 int main(int argc, char * argv[])
 {
@@ -128,7 +181,9 @@ int main(int argc, char * argv[])
     int sc, master_client, client_master;
 
     //Gestion de ORDER_COMPUTE_PRIME_LOCAL
-    
+    if(order == 4){
+        compute_prime_local(number);
+    }
     //=======================================================================
     //entrée en section critique pour faire sa requête au master
     sc = entree_SC(54);
@@ -179,9 +234,3 @@ int main(int argc, char * argv[])
     
     //    - ouvrir les tubes nommés (ils sont déjà créés par le master)
 
-
-/*
-    if(order == ORDER_COMPUTE_PRIME_LOCAL)
-    {
-        //TODO code thread 
-    }else { */
